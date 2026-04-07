@@ -2,141 +2,177 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { CREDIT_PACKAGES } from '@/lib/credit-packages'
-import { cn } from '@/lib/utils'
+
+const packages = [
+  {
+    id: 'starter',
+    name: 'Inicial',
+    credits: 16,
+    queries: 1,
+    price: 15.99,
+    price_formatted: 'R$ 15,99',
+    popular: false,
+    accent: '#10b981',
+    glow: 'rgba(16,185,129,0.18)',
+    glowHover: 'rgba(16,185,129,0.32)',
+    border: 'rgba(16,185,129,0.2)',
+    borderHover: 'rgba(16,185,129,0.5)',
+    btnBg: 'linear-gradient(135deg,#059669,#10b981)',
+    btnShadow: 'rgba(16,185,129,0.3)',
+    icon: '🟢',
+    badge: null,
+    features: ['1 consulta SMART completa', 'Score Anti-Bomba 0-100', 'Preço Justo IA', 'Relatório PDF', 'Validade 30 dias'],
+  },
+  {
+    id: 'recommended',
+    name: 'Recomendado',
+    credits: 48,
+    queries: 3,
+    price: 39.90,
+    price_formatted: 'R$ 39,90',
+    popular: true,
+    accent: '#3b82f6',
+    glow: 'rgba(59,130,246,0.2)',
+    glowHover: 'rgba(59,130,246,0.40)',
+    border: 'rgba(59,130,246,0.4)',
+    borderHover: 'rgba(59,130,246,0.7)',
+    btnBg: 'linear-gradient(135deg,#2563eb,#3b82f6)',
+    btnShadow: 'rgba(59,130,246,0.35)',
+    icon: '🔥',
+    badge: '⭐ Mais vendido',
+    features: ['3 consultas SMART completas', 'Score Anti-Bomba 0-100', 'Preço Justo IA', 'Relatório PDF', 'Validade 60 dias', 'Monitoramento básico'],
+  },
+  {
+    id: 'smart',
+    name: 'Inteligente',
+    credits: 100,
+    queries: 6,
+    price: 69.90,
+    price_formatted: 'R$ 69,90',
+    popular: false,
+    accent: '#8b5cf6',
+    glow: 'rgba(139,92,246,0.18)',
+    glowHover: 'rgba(139,92,246,0.32)',
+    border: 'rgba(139,92,246,0.2)',
+    borderHover: 'rgba(139,92,246,0.5)',
+    btnBg: 'linear-gradient(135deg,#7c3aed,#8b5cf6)',
+    btnShadow: 'rgba(139,92,246,0.3)',
+    icon: '🟣',
+    badge: null,
+    features: ['6 consultas SMART completas', 'Score Anti-Bomba 0-100', 'Preço Justo IA', 'Relatório PDF', 'Validade 90 dias', 'Monitoramento avançado', 'Prioridade no suporte'],
+  },
+]
 
 export function PricingSection() {
   const [hovered, setHovered] = useState<string | null>(null)
 
-  const styles = {
-    starter: {
-      border: 'border-emerald-500/30',
-      glow: 'rgba(16,185,129,0.15)',
-      icon: '🟢',
-      badge: null,
-      btnClass: 'bg-emerald-600 hover:bg-emerald-500 text-white',
-      accent: 'text-emerald-400',
-      checkColor: 'text-emerald-400',
-      ring: 'ring-emerald-500/40',
-    },
-    recommended: {
-      border: 'border-blue-500/50',
-      glow: 'rgba(59,130,246,0.25)',
-      icon: '🔥',
-      badge: 'Mais vendido',
-      btnClass: 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white shadow-lg shadow-blue-500/30',
-      accent: 'text-blue-400',
-      checkColor: 'text-blue-400',
-      ring: 'ring-blue-500/50',
-    },
-    smart: {
-      border: 'border-purple-500/30',
-      glow: 'rgba(139,92,246,0.15)',
-      icon: '🟣',
-      badge: null,
-      btnClass: 'bg-purple-600 hover:bg-purple-500 text-white',
-      accent: 'text-purple-400',
-      checkColor: 'text-purple-400',
-      ring: 'ring-purple-500/40',
-    },
-  }
-
   return (
-    <section id="pacotes" className="relative py-24 bg-[#030712] overflow-hidden">
-      {/* bg effects */}
-      <div className="absolute inset-0 dot-grid opacity-40" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px]
-        rounded-full blur-3xl pointer-events-none"
-        style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.08), transparent)' }} />
+    <section
+      id="pacotes"
+      className="relative py-24"
+      style={{ background: '#030712', overflow: 'hidden' }}
+    >
+      {/* Dot grid */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(circle, rgba(148,163,184,0.10) 1px, transparent 1px)',
+          backgroundSize: '28px 28px',
+          opacity: 0.6,
+        }}
+      />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8" style={{ zIndex: 10 }}>
 
-        {/* header */}
+        {/* Header */}
         <div className="text-center mb-14">
-          <span className="inline-block text-emerald-400 font-semibold text-xs uppercase tracking-widest
-            bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 rounded-full mb-4">
-            Planos &amp; Preços
+          <span
+            className="inline-block font-semibold text-xs uppercase tracking-widest px-4 py-1.5 rounded-full mb-4"
+            style={{ color: '#34d399', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}
+          >
+            Planos & Preços
           </span>
           <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
-            Simples, transparente{' '}
-            <span className="gradient-text">sem assinaturas</span>
+            Simples, transparente,{' '}
+            <span style={{ background: 'linear-gradient(135deg,#3b82f6,#06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+              sem assinaturas
+            </span>
           </h2>
           <p className="text-slate-400 max-w-lg mx-auto">
             Compre créditos uma vez, use quando precisar. Sem taxas ocultas.
           </p>
         </div>
 
-        {/* cards */}
+        {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-10">
-          {CREDIT_PACKAGES.map((pkg) => {
-            const s = styles[pkg.id as keyof typeof styles]
+          {packages.map((pkg) => {
             const isHov = hovered === pkg.id
+            const isActive = isHov || pkg.popular
+
             return (
               <div
                 key={pkg.id}
+                className="relative rounded-3xl p-7 cursor-default"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(13,24,41,0.95), rgba(13,24,41,0.85))',
+                  border: `1px solid ${isActive ? pkg.borderHover : pkg.border}`,
+                  boxShadow: isActive
+                    ? `0 0 48px ${pkg.glow}, 0 20px 40px rgba(0,0,0,0.4)`
+                    : '0 4px 20px rgba(0,0,0,0.3)',
+                  transform: isActive && isHov ? 'translateY(-6px) scale(1.01)' : 'none',
+                  transition: 'all 0.3s ease',
+                  outline: pkg.popular ? `2px solid ${pkg.border}` : 'none',
+                  outlineOffset: '2px',
+                }}
                 onMouseEnter={() => setHovered(pkg.id)}
                 onMouseLeave={() => setHovered(null)}
-                className={cn(
-                  'relative rounded-3xl border p-7 transition-all duration-300',
-                  's.border',
-                  pkg.popular ? 'ring-2 ' + s.ring : '',
-                  isHov ? 'scale-[1.02] -translate-y-1' : ''
-                )}
-                style={{
-                  border: `1px solid`,
-                  borderColor: pkg.popular ? s.glow.replace('0.25', '0.5') : s.glow.replace('0.15', '0.3'),
-                  background: `linear-gradient(135deg, rgba(13,24,41,0.95) 0%, rgba(13,24,41,0.85) 100%)`,
-                  boxShadow: isHov || pkg.popular ? `0 0 60px ${s.glow}, 0 20px 40px rgba(0,0,0,0.4)` : '0 4px 20px rgba(0,0,0,0.3)',
-                }}
               >
                 {/* Popular badge */}
-                {s.badge && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2
-                    bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-black
-                    px-5 py-1.5 rounded-full shadow-lg shadow-blue-500/30 tracking-wide whitespace-nowrap">
-                    ⭐ {s.badge}
+                {pkg.badge && (
+                  <div
+                    className="absolute -top-4 left-1/2 -translate-x-1/2 text-white text-xs font-black px-5 py-1.5 rounded-full whitespace-nowrap"
+                    style={{ background: 'linear-gradient(135deg,#2563eb,#3b82f6)', boxShadow: '0 4px 16px rgba(37,99,235,0.4)' }}
+                  >
+                    {pkg.badge}
                   </div>
                 )}
 
-                {/* Icon + Name */}
-                <div className="flex items-center justify-between mb-5">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-5">
                   <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">{s.icon}</span>
-                      <span className="text-slate-400 text-sm font-medium">{pkg.name}</span>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-xl">{pkg.icon}</span>
+                      <span className="text-slate-400 text-sm">{pkg.name}</span>
                     </div>
                     <div className="flex items-baseline gap-1">
-                      <span className={`text-4xl font-black ${s.accent}`}>{pkg.credits}</span>
+                      <span className="text-4xl font-black" style={{ color: pkg.accent }}>{pkg.credits}</span>
                       <span className="text-slate-500 text-sm">créditos</span>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-black text-white">{pkg.price_formatted}</div>
-                    <div className="text-slate-500 text-xs mt-0.5">à vista via PIX</div>
+                    <div className="text-slate-500 text-xs mt-0.5">via PIX</div>
                   </div>
                 </div>
 
-                {/* Queries highlight */}
-                <div className={cn(
-                  'rounded-xl px-4 py-2.5 mb-5 flex items-center justify-between',
-                  'border',
-                  pkg.popular
-                    ? 'bg-blue-500/10 border-blue-500/20'
-                    : 'bg-white/4 border-white/8'
-                )}>
+                {/* Queries info */}
+                <div
+                  className="rounded-xl px-4 py-2.5 mb-5 flex items-center justify-between"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+                >
                   <span className="text-slate-300 text-sm font-medium">
                     {pkg.queries} consulta{pkg.queries > 1 ? 's' : ''} SMART
                   </span>
-                  <span className={`text-xs font-bold ${s.accent}`}>
-                    R$ {(pkg.price / pkg.queries).toFixed(2)}/consulta
+                  <span className="text-xs font-bold" style={{ color: pkg.accent }}>
+                    R$ {(pkg.price / pkg.queries).toFixed(2)}/cada
                   </span>
                 </div>
 
-                {/* Features list */}
+                {/* Features */}
                 <ul className="space-y-2.5 mb-7">
                   {pkg.features.map((f, i) => (
                     <li key={i} className="flex items-center gap-2.5 text-sm text-slate-400">
-                      <span className={`flex-shrink-0 font-bold ${s.checkColor}`}>✓</span>
+                      <span className="font-bold flex-shrink-0" style={{ color: pkg.accent }}>✓</span>
                       {f}
                     </li>
                   ))}
@@ -144,10 +180,15 @@ export function PricingSection() {
 
                 {/* CTA */}
                 <Link href={`/comprar?pacote=${pkg.id}`}>
-                  <button className={cn(
-                    'w-full py-3.5 px-6 rounded-xl font-bold text-sm transition-all duration-200 active:scale-95',
-                    s.btnClass
-                  )}>
+                  <button
+                    className="w-full py-3.5 px-6 rounded-xl font-bold text-sm text-white transition-all duration-200"
+                    style={{
+                      background: pkg.btnBg,
+                      boxShadow: `0 4px 20px ${pkg.btnShadow}`,
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
+                    onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+                  >
                     Comprar {pkg.name}
                   </button>
                 </Link>
@@ -156,15 +197,10 @@ export function PricingSection() {
           })}
         </div>
 
-        {/* trust */}
+        {/* Trust */}
         <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500">
-          {[
-            '💚 Pagamento via PIX',
-            '⚡ Créditos em segundos',
-            '🔒 Pagamento seguro Mercado Pago',
-            '🔄 Sem mensalidade',
-          ].map((t) => (
-            <span key={t} className="flex items-center gap-1.5">{t}</span>
+          {['💚 Pagamento via PIX', '⚡ Créditos em segundos', '🔒 Mercado Pago', '🔄 Sem mensalidade'].map(t => (
+            <span key={t}>{t}</span>
           ))}
         </div>
       </div>

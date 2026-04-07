@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { VehicleService } from '@/lib/vehicle-service'
 
 export function CTASection() {
   const router = useRouter()
@@ -15,35 +14,64 @@ export function CTASection() {
 
   const handleSearch = () => {
     const clean = plate.replace(/-/g, '')
-    if (VehicleService.validatePlate(clean)) router.push(`/resultado?placa=${clean}`)
+    const mercosul = /^[A-Z]{3}[0-9][A-Z][0-9]{2}$/.test(clean)
+    const old = /^[A-Z]{3}[0-9]{4}$/.test(clean)
+    if (mercosul || old) router.push(`/resultado?placa=${clean}`)
   }
 
   return (
-    <section className="relative py-28 overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, #0d1829 0%, #0a1628 50%, #060c18 100%)' }}>
+    <section
+      className="relative py-28"
+      style={{
+        background: 'linear-gradient(135deg, #0d1829 0%, #0a1628 50%, #060c18 100%)',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Blue blob */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          top: 0, left: '25%',
+          width: '400px', height: '400px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(59,130,246,0.12), transparent)',
+          filter: 'blur(60px)',
+          opacity: 0.8,
+        }}
+      />
+      {/* Purple blob */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          bottom: 0, right: '25%',
+          width: '360px', height: '360px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(139,92,246,0.10), transparent)',
+          filter: 'blur(60px)',
+        }}
+      />
 
-      {/* Animated bg */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20 animate-float"
-          style={{ background: 'radial-gradient(circle, #3b82f6, transparent)' }} />
-        <div className="absolute bottom-0 right-1/4 w-80 h-80 rounded-full blur-3xl opacity-15 animate-float-delayed"
-          style={{ background: 'radial-gradient(circle, #8b5cf6, transparent)' }} />
-      </div>
+      {/* Top border */}
+      <div
+        className="absolute top-0 left-0 right-0 h-px pointer-events-none"
+        style={{ background: 'linear-gradient(to right, transparent, rgba(59,130,246,0.4), transparent)' }}
+      />
 
-      {/* Diagonal border top */}
-      <div className="absolute top-0 left-0 right-0 h-px"
-        style={{ background: 'linear-gradient(to right, transparent, rgba(59,130,246,0.4), transparent)' }} />
+      <div className="relative max-w-3xl mx-auto px-4 sm:px-6 text-center" style={{ zIndex: 10 }}>
 
-      <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 text-center">
-
-        <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/20
-          text-red-400 px-4 py-1.5 rounded-full text-sm font-medium mb-8">
+        {/* Warning badge */}
+        <div
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium mb-8"
+          style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#f87171' }}
+        >
           ⚠️ Não arrisque seu dinheiro
         </div>
 
         <h2 className="text-4xl sm:text-5xl font-black text-white mb-5 leading-tight">
           Cada consulta pode te{' '}
-          <span className="gradient-text">economizar milhares</span>
+          <span style={{ background: 'linear-gradient(135deg,#3b82f6,#06b6d4)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            economizar milhares
+          </span>
         </h2>
 
         <p className="text-slate-400 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
@@ -53,12 +81,23 @@ export function CTASection() {
 
         {/* Inline search */}
         <div className="flex gap-3 max-w-md mx-auto mb-8">
-          <div className="relative flex-1 flex items-center bg-white/8 border border-white/15
-            rounded-2xl overflow-hidden focus-within:border-blue-500/60 transition-colors">
-            <div className="flex flex-col items-center px-3 py-1 bg-blue-700/80 self-stretch gap-0.5">
+          <div
+            className="relative flex-1 flex items-center rounded-2xl"
+            style={{
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.14)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              className="flex flex-col items-center px-3 py-1 self-stretch gap-0.5 flex-shrink-0"
+              style={{ background: 'rgba(29,78,216,0.8)' }}
+            >
               <span className="text-yellow-300 font-black text-[9px] tracking-widest">BR</span>
               <div className="flex gap-0.5">
-                {[...Array(4)].map((_,i) => <span key={i} className="w-[2px] h-[2px] bg-yellow-300/60 rounded-full" />)}
+                {[...Array(4)].map((_, i) => (
+                  <span key={i} className="w-[2px] h-[2px] bg-yellow-300 rounded-full" style={{ opacity: 0.6 }} />
+                ))}
               </div>
             </div>
             <input
@@ -68,36 +107,62 @@ export function CTASection() {
               onKeyDown={e => e.key === 'Enter' && handleSearch()}
               placeholder="ABC-1D23"
               maxLength={8}
-              className="flex-1 bg-transparent px-3 py-3.5 text-xl font-black tracking-[0.25em]
-                text-white uppercase placeholder:text-white/20 outline-none"
+              spellCheck={false}
+              autoComplete="off"
+              className="flex-1 bg-transparent px-3 py-3.5 text-xl font-black tracking-[0.25em] text-white uppercase outline-none"
+              style={{ caretColor: '#3b82f6' }}
             />
           </div>
           <button
             onClick={handleSearch}
-            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500
-              text-white font-bold px-5 rounded-2xl transition-all active:scale-95 flex-shrink-0 shadow-lg shadow-blue-500/30"
+            className="text-white font-bold px-5 rounded-2xl flex-shrink-0 transition-all"
+            style={{
+              background: 'linear-gradient(135deg,#2563eb,#3b82f6)',
+              boxShadow: '0 4px 20px rgba(37,99,235,0.3)',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
           >
             Buscar
           </button>
         </div>
 
-        {/* Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <a href="/comprar"
-            className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500
-              text-white font-bold px-8 py-4 rounded-2xl transition-all active:scale-95 shadow-xl
-              shadow-blue-500/25 inline-flex items-center justify-center gap-2 text-base">
+        {/* Action buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <a
+            href="/comprar"
+            className="inline-flex items-center justify-center gap-2 text-white font-bold px-8 py-4 rounded-2xl text-base transition-all"
+            style={{
+              background: 'linear-gradient(135deg,#2563eb,#3b82f6)',
+              boxShadow: '0 8px 24px rgba(37,99,235,0.3)',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
             💳 Comprar créditos agora
           </a>
-          <a href="/#como-funciona"
-            className="border border-white/15 text-slate-300 hover:text-white hover:border-white/30
-              font-semibold px-8 py-4 rounded-2xl transition-all inline-flex items-center justify-center gap-2 text-base">
+          <a
+            href="/#como-funciona"
+            className="inline-flex items-center justify-center gap-2 font-semibold px-8 py-4 rounded-2xl text-base transition-all"
+            style={{
+              border: '1px solid rgba(255,255,255,0.15)',
+              color: '#cbd5e1',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.3)'
+              e.currentTarget.style.color = '#fff'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)'
+              e.currentTarget.style.color = '#cbd5e1'
+            }}
+          >
             Saiba mais
           </a>
         </div>
 
-        {/* Social proof mini */}
-        <div className="mt-12 flex flex-wrap justify-center gap-6 text-sm text-slate-500">
+        {/* Social proof */}
+        <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-500">
           {['🔍 48k+ consultas realizadas', '🛡️ 94% de golpes evitados', '⭐ 4.9/5 avaliação'].map(t => (
             <span key={t}>{t}</span>
           ))}
