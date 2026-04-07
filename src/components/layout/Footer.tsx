@@ -1,41 +1,79 @@
 import Link from 'next/link'
 
 export function Footer() {
-  return (
-    <footer className="bg-[#060c18] border-t border-white/10 py-14">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
+  const links = {
+    produto: [
+      { href: '/#como-funciona', label: 'Como funciona' },
+      { href: '/#pacotes', label: 'Planos e preços' },
+      { href: '/comprar', label: 'Comprar créditos' },
+      { href: '/dashboard', label: 'Dashboard' },
+    ],
+    legal: [
+      { href: '/privacidade', label: 'Privacidade' },
+      { href: '/termos', label: 'Termos de uso' },
+      { href: '/suporte', label: 'Suporte' },
+    ],
+  }
 
-          {/* Brand */}
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center">
-                <span className="text-white font-black text-base">C</span>
+  return (
+    <footer style={{
+      background: '#060c18',
+      borderTop: '1px solid rgba(255,255,255,0.1)',
+      padding: '56px 0 0',
+    }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px' }}>
+
+        {/* Grid principal */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
+          gap: 40,
+          marginBottom: 48,
+        }}>
+
+          {/* Brand — ocupa 2 colunas em desktop */}
+          <div style={{ gridColumn: 'span 2' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 10,
+                background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 4px 12px rgba(59,130,246,0.35)',
+                flexShrink: 0,
+              }}>
+                <span style={{ color: '#fff', fontWeight: 900, fontSize: 16 }}>C</span>
               </div>
-              <span className="font-black text-white text-lg">Carcheck Pro</span>
+              <span style={{ fontWeight: 900, fontSize: 18, color: '#ffffff', letterSpacing: '-0.3px' }}>
+                Carcheck Pro
+              </span>
             </div>
-            <p className="text-sm leading-relaxed max-w-xs text-slate-400 mb-4">
+            <p style={{ fontSize: 14, lineHeight: 1.7, color: '#94a3b8', maxWidth: 280, marginBottom: 16 }}>
               Descubra se o carro usado que você quer comprar é uma bomba ou um ótimo negócio.
               Score Anti-Bomba + Preço Justo IA.
             </p>
-            <div className="inline-flex items-center gap-2 bg-white/6 border border-white/12 rounded-xl px-3 py-2 text-xs text-slate-300">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 10, padding: '6px 12px', fontSize: 12, color: '#cbd5e1',
+            }}>
+              <span style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: '#4ade80', display: 'inline-block',
+                boxShadow: '0 0 6px #4ade80',
+              }} />
               Sistema operacional 24/7
             </div>
           </div>
 
           {/* Links Produto */}
           <div>
-            <h4 className="text-white font-semibold text-sm mb-4">Produto</h4>
-            <ul className="space-y-2.5 text-sm">
-              {[
-                { href: '/#como-funciona', label: 'Como funciona' },
-                { href: '/#pacotes', label: 'Planos e preços' },
-                { href: '/comprar', label: 'Comprar créditos' },
-                { href: '/dashboard', label: 'Dashboard' },
-              ].map((l) => (
+            <h4 style={{ color: '#ffffff', fontWeight: 700, fontSize: 14, marginBottom: 16 }}>Produto</h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {links.produto.map(l => (
                 <li key={l.href}>
-                  <Link href={l.href} className="text-slate-400 hover:text-white transition-colors">
+                  <Link href={l.href} style={{ color: '#94a3b8', fontSize: 14, textDecoration: 'none' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}>
                     {l.label}
                   </Link>
                 </li>
@@ -45,15 +83,13 @@ export function Footer() {
 
           {/* Legal */}
           <div>
-            <h4 className="text-white font-semibold text-sm mb-4">Legal</h4>
-            <ul className="space-y-2.5 text-sm">
-              {[
-                { href: '/privacidade', label: 'Privacidade' },
-                { href: '/termos', label: 'Termos de uso' },
-                { href: '/suporte', label: 'Suporte' },
-              ].map((l) => (
+            <h4 style={{ color: '#ffffff', fontWeight: 700, fontSize: 14, marginBottom: 16 }}>Legal</h4>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {links.legal.map(l => (
                 <li key={l.href}>
-                  <Link href={l.href} className="text-slate-400 hover:text-white transition-colors">
+                  <Link href={l.href} style={{ color: '#94a3b8', fontSize: 14, textDecoration: 'none' }}
+                    onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                    onMouseLeave={e => (e.currentTarget.style.color = '#94a3b8')}>
                     {l.label}
                   </Link>
                 </li>
@@ -63,14 +99,24 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-400">
-          <p>© 2025 Carcheck Pro. Todos os direitos reservados.</p>
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5">
-              <span className="text-green-400">💚</span> Pagamentos via PIX Mercado Pago
+        <div style={{
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          padding: '24px 0',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 12,
+          fontSize: 12,
+          color: '#94a3b8',
+        }}>
+          <p style={{ margin: 0 }}>© 2025 Carcheck Pro. Todos os direitos reservados.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ color: '#4ade80' }}>💚</span> Pagamentos via PIX Mercado Pago
             </span>
-            <span className="flex items-center gap-1.5">
-              <span>🔒</span> SSL 256-bit
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              🔒 SSL 256-bit
             </span>
           </div>
         </div>
