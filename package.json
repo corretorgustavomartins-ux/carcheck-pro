@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@supabase/auth-helpers-nextjs": "^0.15.0",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/ssr": "^0.10.0",
@@ -17,7 +16,6 @@
     "axios": "^1.14.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
-    "framer-motion": "^12.38.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^1.7.0",

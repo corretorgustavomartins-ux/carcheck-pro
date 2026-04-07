@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Reduz uso de memória no build
+  experimental: {
+    webpackBuildWorker: false,
+  },
+  // Desabilita source maps em produção (economiza memória)
+  productionBrowserSourceMaps: false,
 }
 
 export default nextConfig
