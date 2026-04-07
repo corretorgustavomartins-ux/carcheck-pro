@@ -38,3 +38,4 @@ coverage/
 .vercel
 # Next.js build
 .next
+env_vercel.txt
