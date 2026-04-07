@@ -61,7 +61,7 @@ export interface ConsultarPlacaResult {
 async function solicitarRelatorio(placa: string): Promise<string> {
   const form = new FormData()
   form.append('placa', placa)
-  form.append('tipo_consulta', 'basica') // 'basica' | 'intermediaria' | 'avancada' | 'diamante'
+  form.append('tipo_consulta', 'ouro') // valores: 'bronze' | 'prata' | 'ouro' | 'diamante'
 
   const res = await fetch(`${BASE_URL}/v2/solicitarRelatorio`, {
     method:  'POST',
