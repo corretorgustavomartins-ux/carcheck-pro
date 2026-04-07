@@ -143,14 +143,14 @@ export default function HomePage() {
   const CARD = 'rgba(13,24,41,0.9)', BORDER = 'rgba(255,255,255,0.07)'
 
   return (
-    <div style={{ background: BG2, minHeight: '100vh', overflowX: 'hidden' }}>
+    <div style={{ background: BG2, minHeight: '100vh', overflowX: 'hidden', paddingTop: 'clamp(56px, 4vw, 64px)' }}>
 
       {/* ══ HERO ══ */}
       <section style={{
         position: 'relative', minHeight: '100vh',
         display: 'flex', alignItems: 'center',
         background: `linear-gradient(135deg,${BG1} 0%,#0d1829 60%,${BG1} 100%)`,
-        overflow: 'hidden', paddingTop: 72,
+        overflow: 'hidden',
       }}>
         {/* grid bg */}
         <div style={{

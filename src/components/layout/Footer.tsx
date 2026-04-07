@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export function Footer() {
   return (
-    <footer className="bg-[#030712] border-t border-white/6 text-slate-500 py-14">
+    <footer className="bg-[#060c18] border-t border-white/10 py-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
 
@@ -14,17 +14,17 @@ export function Footer() {
               </div>
               <span className="font-black text-white text-lg">Carcheck Pro</span>
             </div>
-            <p className="text-sm leading-relaxed max-w-xs text-slate-500 mb-4">
+            <p className="text-sm leading-relaxed max-w-xs text-slate-400 mb-4">
               Descubra se o carro usado que você quer comprar é uma bomba ou um ótimo negócio.
               Score Anti-Bomba + Preço Justo IA.
             </p>
-            <div className="inline-flex items-center gap-2 bg-white/4 border border-white/8 rounded-xl px-3 py-2 text-xs text-slate-500">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <div className="inline-flex items-center gap-2 bg-white/6 border border-white/12 rounded-xl px-3 py-2 text-xs text-slate-300">
+              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
               Sistema operacional 24/7
             </div>
           </div>
 
-          {/* Links */}
+          {/* Links Produto */}
           <div>
             <h4 className="text-white font-semibold text-sm mb-4">Produto</h4>
             <ul className="space-y-2.5 text-sm">
@@ -35,7 +35,9 @@ export function Footer() {
                 { href: '/dashboard', label: 'Dashboard' },
               ].map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="hover:text-white transition-colors">{l.label}</Link>
+                  <Link href={l.href} className="text-slate-400 hover:text-white transition-colors">
+                    {l.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -51,7 +53,9 @@ export function Footer() {
                 { href: '/suporte', label: 'Suporte' },
               ].map((l) => (
                 <li key={l.href}>
-                  <Link href={l.href} className="hover:text-white transition-colors">{l.label}</Link>
+                  <Link href={l.href} className="text-slate-400 hover:text-white transition-colors">
+                    {l.label}
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -59,8 +63,8 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-white/6 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
-          <p>© 2024 Carcheck Pro. Todos os direitos reservados.</p>
+        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-slate-400">
+          <p>© 2025 Carcheck Pro. Todos os direitos reservados.</p>
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
               <span className="text-green-400">💚</span> Pagamentos via PIX Mercado Pago
