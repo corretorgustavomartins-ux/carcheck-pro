@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import MercadoPagoConfig, { Payment } from 'mercadopago'
 
 export async function GET(req: NextRequest) {
   try {
@@ -12,11 +13,11 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const paymentId = searchParams.get('id')
-
     if (!paymentId) {
       return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
     }
 
+    // Busca transação no banco
     const { data: transaction } = await supabase
       .from('transactions')
       .select('*')
@@ -28,56 +29,29 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Transação não encontrada' }, { status: 404 })
     }
 
-    // If already approved
+    // Já aprovado localmente — retorna imediatamente
     if (transaction.payment_status === 'approved') {
       return NextResponse.json({ status: 'approved', credits: transaction.credits })
     }
 
-    // Check with Mercado Pago if we have a real payment ID
-    const mpAccessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
-    if (mpAccessToken && transaction.payment_id && !transaction.payment_id.startsWith('mock_')) {
-      try {
-        const mpResponse = await fetch(
-          `https://api.mercadopago.com/v1/payments/${transaction.payment_id}`,
-          {
-            headers: { 'Authorization': `Bearer ${mpAccessToken}` },
-          }
-        )
-
-        if (mpResponse.ok) {
-          const mpData = await mpResponse.json()
-
-          if (mpData.status === 'approved') {
-            // Approve and add credits
-            await supabase
-              .from('transactions')
-              .update({ payment_status: 'approved' })
-              .eq('id', paymentId)
-
-            await supabase.rpc('add_credits', {
-              p_user_id: user.id,
-              p_amount: transaction.credits,
-            })
-
-            return NextResponse.json({ status: 'approved', credits: transaction.credits })
-          }
-
-          return NextResponse.json({ status: mpData.status })
-        }
-      } catch (err) {
-        console.error('MP status check error:', err)
-      }
+    // Verifica status direto no Mercado Pago
+    const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN
+    if (!accessToken || !transaction.payment_id) {
+      return NextResponse.json({ status: transaction.payment_status })
     }
 
-    // For development: auto-approve after 10 seconds (mock)
-    const createdAt = new Date(transaction.created_at).getTime()
-    const now = Date.now()
-    if (now - createdAt > 10000 && transaction.payment_id?.startsWith('mock_')) {
-      // Auto approve mock payment
+    const client = new MercadoPagoConfig({ accessToken })
+    const paymentClient = new Payment(client)
+
+    const mpData = await paymentClient.get({ id: transaction.payment_id })
+
+    if (mpData.status === 'approved') {
+      // Aprova localmente e adiciona créditos (idempotente — só faz 1x)
       await supabase
         .from('transactions')
         .update({ payment_status: 'approved' })
         .eq('id', paymentId)
+        .eq('payment_status', 'pending') // evita dupla execução
 
       await supabase.rpc('add_credits', {
         p_user_id: user.id,
@@ -87,9 +61,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ status: 'approved', credits: transaction.credits })
     }
 
-    return NextResponse.json({ status: transaction.payment_status })
-  } catch (err) {
-    console.error('Payment status error:', err)
+    // Retorna status atual do MP (pending, in_process, rejected, cancelled…)
+    return NextResponse.json({ status: mpData.status ?? transaction.payment_status })
+
+  } catch (err: any) {
+    console.error('Erro payment/status:', err)
     return NextResponse.json({ error: 'Erro ao verificar pagamento' }, { status: 500 })
   }
 }
