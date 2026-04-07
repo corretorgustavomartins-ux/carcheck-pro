@@ -465,7 +465,7 @@ export default function HomePage() {
             {[
               { n:'01', emoji:'🔍', title:'Digite a placa',       desc:'Formato Mercosul ou antigo. Qualquer placa brasileira.', color:'#3b82f6', bg:'rgba(59,130,246,0.08)', border:'rgba(59,130,246,0.2)' },
               { n:'02', emoji:'👁️', title:'Prévia grátis',        desc:'Marca, modelo, ano e faixa FIPE — sem custo algum.',       color:'#06b6d4', bg:'rgba(6,182,212,0.08)',  border:'rgba(6,182,212,0.2)' },
-              { n:'03', emoji:'💳', title:'Desbloqueie o SMART',  desc:'16 créditos para score completo + alertas + preço IA.',  color:'#8b5cf6', bg:'rgba(139,92,246,0.08)', border:'rgba(139,92,246,0.2)' },
+              { n:'03', emoji:'💳', title:'Escolha o relatório',  desc:'SMART (16 cr.) ou PREMIUM (35 cr.) para máximo detalhamento com fotos e recall.',  color:'#8b5cf6', bg:'rgba(139,92,246,0.08)', border:'rgba(139,92,246,0.2)' },
               { n:'04', emoji:'🏆', title:'Negocie com poder',    desc:'Apresente o relatório e negocie com dados oficiais.',     color:'#10b981', bg:'rgba(16,185,129,0.08)', border:'rgba(16,185,129,0.2)' },
             ].map((s, i) => (
               <div key={i} style={{
@@ -676,6 +676,53 @@ export default function HomePage() {
             {['💚 Pagamento via PIX','⚡ Créditos em segundos','🔒 Mercado Pago','🔄 Sem mensalidade'].map(t => (
               <span key={t} style={{ fontSize: 13, color: '#475569' }}>{t}</span>
             ))}
+          </div>
+
+          {/* ── Comparativo de relatórios ── */}
+          <div style={{ maxWidth: 780, margin: '64px auto 0', background: '#0a1628', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, padding: '40px 32px' }}>
+            <div style={{ textAlign: 'center', marginBottom: 32 }}>
+              <h3 style={{ color: '#fff', fontSize: 22, fontWeight: 900, marginBottom: 8 }}>Qual relatório escolher?</h3>
+              <p style={{ color: '#64748b', fontSize: 14 }}>Compare o que cada tipo de consulta oferece</p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0, borderRadius: 16, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
+              {/* Header */}
+              <div style={{ background: 'rgba(255,255,255,0.04)', padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)' }}>
+                <span style={{ color: '#64748b', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Recurso</span>
+              </div>
+              <div style={{ background: 'rgba(59,130,246,0.08)', padding: '14px 16px', borderBottom: '1px solid rgba(59,130,246,0.2)', borderRight: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' }}>
+                <div style={{ color: '#60a5fa', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', marginBottom: 2 }}>🔍 SMART</div>
+                <div style={{ color: '#fff', fontSize: 18, fontWeight: 900 }}>16 créditos</div>
+              </div>
+              <div style={{ background: 'rgba(139,92,246,0.1)', padding: '14px 16px', borderBottom: '1px solid rgba(139,92,246,0.3)', textAlign: 'center', position: 'relative' }}>
+                <div style={{ color: '#a78bfa', fontSize: 11, fontWeight: 900, textTransform: 'uppercase', marginBottom: 2 }}>💎 PREMIUM</div>
+                <div style={{ color: '#fff', fontSize: 18, fontWeight: 900 }}>35 créditos</div>
+              </div>
+              {/* Rows */}
+              {[
+                { label: 'Score Anti-Bomba',        smart: '✅', premium: '✅' },
+                { label: 'Sinistro + Gravame',       smart: '✅', premium: '✅' },
+                { label: 'Preço Justo IA',            smart: '✅', premium: '✅' },
+                { label: 'Restrições DETRAN',        smart: '✅', premium: '✅' },
+                { label: 'Relatório PDF',             smart: '✅', premium: '✅' },
+                { label: 'Histórico de leilão',      smart: '—',  premium: '✅' },
+                { label: 'Recall do fabricante',     smart: '—',  premium: '✅' },
+                { label: 'Fotos oficiais',            smart: '—',  premium: '✅' },
+                { label: 'Ficha técnica completa',   smart: '—',  premium: '✅' },
+                { label: 'Débitos IPVA e multas',    smart: '—',  premium: '✅' },
+              ].map((row, i) => (
+                <div key={i} style={{ display: 'contents' }}>
+                  <div style={{ padding: '12px 16px', borderBottom: i < 9 ? '1px solid rgba(255,255,255,0.05)' : 'none', borderRight: '1px solid rgba(255,255,255,0.06)', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.015)' }}>
+                    <span style={{ color: '#94a3b8', fontSize: 13 }}>{row.label}</span>
+                  </div>
+                  <div style={{ padding: '12px 16px', borderBottom: i < 9 ? '1px solid rgba(255,255,255,0.05)' : 'none', borderRight: '1px solid rgba(255,255,255,0.06)', background: i % 2 === 0 ? 'rgba(59,130,246,0.03)' : 'rgba(59,130,246,0.05)', textAlign: 'center' as const }}>
+                    <span style={{ color: row.smart === '✅' ? '#4ade80' : '#334155', fontSize: 16 }}>{row.smart}</span>
+                  </div>
+                  <div style={{ padding: '12px 16px', borderBottom: i < 9 ? '1px solid rgba(255,255,255,0.05)' : 'none', background: i % 2 === 0 ? 'rgba(139,92,246,0.04)' : 'rgba(139,92,246,0.07)', textAlign: 'center' as const }}>
+                    <span style={{ color: row.premium === '✅' ? '#a78bfa' : '#334155', fontSize: 16 }}>{row.premium}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

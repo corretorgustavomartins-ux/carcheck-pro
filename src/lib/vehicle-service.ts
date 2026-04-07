@@ -6,7 +6,7 @@
  */
 
 import { VehicleData, VehiclePreview } from '@/types'
-import { consultarVeiculo } from '@/lib/consultarplaca'
+import { consultarVeiculo, TipoConsulta } from '@/lib/consultarplaca'
 
 // ── Verifica se a API real está configurada ──────────────────
 function isApiConfigured(): boolean {
@@ -99,13 +99,13 @@ export class VehicleService {
     }
   }
 
-  /** Relatório completo — consome 16 créditos */
-  static async getFullReport(plate: string): Promise<VehicleData | null> {
+  /** Relatório completo — consome 16 créditos (SMART) ou 35 créditos (PREMIUM) */
+  static async getFullReport(plate: string, tipo: TipoConsulta = 'smart'): Promise<VehicleData | null> {
     const p = plate.toUpperCase().replace(/[^A-Z0-9]/g, '')
 
     if (isApiConfigured()) {
       try {
-        const r = await consultarVeiculo(p)
+        const r = await consultarVeiculo(p, tipo)
 
         // Monta restricoes completas incluindo débitos, leilão, roubo
         const restricoes: string[] = [...r.restricoes]
@@ -132,7 +132,19 @@ export class VehicleService {
           restricoes,
           cor:           r.cor,
           chassi_parcial: r.chassi ? maskChassi(r.chassi) : '***',
-          raw_api:       r.raw_json,
+          // Campos extras do Premium (diamante)
+          raw_api:       {
+            ...r.raw_json,
+            recall:              r.recall,
+            recall_descricao:    r.recall_descricao,
+            leilao:              r.leilao,
+            leilao_classificacao: r.leilao_classificacao,
+            debitos_ipva:        r.debitos_ipva,
+            debitos_multa:       r.debitos_multa,
+            roubo_furto:         r.roubo_furto,
+            imagens:             r.imagens,
+            ficha_tecnica:       r.ficha_tecnica,
+          },
         }
       } catch (err) {
         console.error('[VehicleService] ConsultarPlaca full report error:', err)

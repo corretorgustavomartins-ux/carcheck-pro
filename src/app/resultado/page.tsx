@@ -68,21 +68,15 @@ function ResultadoContent() {
   return (
     <div className="min-h-screen bg-slate-50 pt-20">
       <div className="max-w-2xl mx-auto px-4 py-10">
+
         {/* Search bar */}
         <Card className="mb-6">
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-3">Consultar outra placa</h2>
           <div className="flex gap-3">
             <div className="flex-1">
-              <PlateInput
-                value={newPlate}
-                onChange={setNewPlate}
-                onSearch={handleNewSearch}
-                size="md"
-              />
+              <PlateInput value={newPlate} onChange={setNewPlate} onSearch={handleNewSearch} size="md" />
             </div>
-            <Button onClick={handleNewSearch} size="md">
-              Buscar
-            </Button>
+            <Button onClick={handleNewSearch} size="md">Buscar</Button>
           </div>
         </Card>
 
@@ -95,7 +89,7 @@ function ResultadoContent() {
         ) : preview ? (
           <>
             {/* Preview Card */}
-            <Card className="mb-6 overflow-hidden" shadow="lg">
+            <Card className="mb-4 overflow-hidden" shadow="lg">
               {/* Header */}
               <div className="bg-gradient-to-r from-slate-800 to-slate-900 px-6 py-5 -mx-6 -mt-6 mb-6">
                 <div className="flex items-center justify-between">
@@ -120,39 +114,93 @@ function ResultadoContent() {
                 <InfoRow icon="💰" label="FIPE" value={preview.fipe_formatted} />
               </div>
 
-              {/* Blurred items */}
-              <div className="space-y-3 mb-6">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-                  Relatório SMART completo
+              {/* Blurred locked items */}
+              <div className="space-y-2 mb-6">
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">
+                  Relatório SMART — bloqueado
                 </div>
-                {['Score Anti-Bomba (0-100)', 'Registro de Sinistro', 'Gravame Financeiro', 'Restrições Ativas', 'Preço Justo IA', 'Dica de Negociação', 'PDF do Relatório'].map((item, i) => (
+                {['Score Anti-Bomba (0–100)', 'Registro de Sinistro', 'Gravame Financeiro', 'Restrições Ativas', 'Preço Justo IA', 'Dica de Negociação', 'PDF do Relatório'].map((item, i) => (
                   <div key={i} className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3 relative overflow-hidden">
                     <span className="text-slate-700 text-sm font-medium blur-sm select-none">{item}</span>
                     <span className="text-blue-500 text-xs font-semibold bg-blue-50 px-2 py-0.5 rounded">🔒 Bloqueado</span>
                   </div>
                 ))}
               </div>
-
-              {/* CTA */}
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl p-5 text-center">
-                <div className="text-2xl mb-2">🔓</div>
-                <h3 className="font-black text-slate-900 text-lg mb-1">Desbloquear score completo</h3>
-                <p className="text-slate-500 text-sm mb-4">Use 16 créditos para ver sinistro, gravame, score e preço justo</p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link href={`/consulta?placa=${plate}`} className="flex-1">
-                    <Button fullWidth size="lg" className="bg-gradient-to-r from-blue-600 to-blue-700">
-                      🔓 Desbloquear por 16 créditos
-                    </Button>
-                  </Link>
-                  <Link href="/comprar">
-                    <Button variant="outline" size="lg">
-                      Comprar créditos
-                    </Button>
-                  </Link>
-                </div>
-                <p className="text-xs text-slate-400 mt-3">Primeiro acesso? Cadastre-se e ganhe 5 créditos grátis</p>
-              </div>
             </Card>
+
+            {/* ─── OPÇÕES DE DESBLOQUEIO ─── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+
+              {/* SMART - 16 créditos */}
+              <div className="bg-white border-2 border-blue-200 rounded-2xl p-5 flex flex-col hover:border-blue-400 transition-colors">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider bg-blue-50 px-2 py-1 rounded-lg">SMART</span>
+                  <span className="text-xs text-slate-400">Relatório padrão</span>
+                </div>
+                <div className="text-2xl font-black text-slate-900 mb-1">16 créditos</div>
+                <div className="text-sm text-slate-500 mb-4">≈ R$ 15,99 no pacote inicial</div>
+                <ul className="space-y-1.5 mb-5 flex-1">
+                  {['Score Anti-Bomba (0–100)', 'Sinistro + Gravame', 'Preço Justo IA', 'Restrições', 'PDF incluso'].map((f, i) => (
+                    <li key={i} className="text-xs text-slate-600 flex items-center gap-2">
+                      <span className="text-blue-500 font-bold">✓</span>{f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href={`/consulta?placa=${plate}&tipo=smart`}>
+                  <button className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-bold text-sm rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all">
+                    🔓 Desbloquear — 16 créditos
+                  </button>
+                </Link>
+              </div>
+
+              {/* PREMIUM - 35 créditos */}
+              <div className="bg-white border-2 border-purple-300 rounded-2xl p-5 flex flex-col relative hover:border-purple-500 transition-colors"
+                style={{ boxShadow: '0 0 20px rgba(139,92,246,0.1)' }}>
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="bg-gradient-to-r from-purple-600 to-violet-600 text-white text-xs font-black px-4 py-1 rounded-full shadow-lg whitespace-nowrap">
+                    ⭐ MAIS COMPLETO
+                  </span>
+                </div>
+                <div className="flex items-center justify-between mb-3 mt-2">
+                  <span className="text-xs font-bold text-purple-600 uppercase tracking-wider bg-purple-50 px-2 py-1 rounded-lg">PREMIUM</span>
+                  <span className="text-xs text-slate-400">Relatório diamante</span>
+                </div>
+                <div className="text-2xl font-black text-slate-900 mb-1">35 créditos</div>
+                <div className="text-sm text-slate-500 mb-4">Tudo do SMART + extras exclusivos</div>
+                <ul className="space-y-1.5 mb-5 flex-1">
+                  {[
+                    'Tudo do plano SMART',
+                    'Histórico de leilão detalhado',
+                    'Recall do fabricante',
+                    'Fotos oficiais do veículo',
+                    'Ficha técnica completa',
+                    'Roubo/furto detalhado',
+                    'Débitos IPVA e multas',
+                  ].map((f, i) => (
+                    <li key={i} className="text-xs text-slate-600 flex items-center gap-2">
+                      <span className="text-purple-500 font-bold">✓</span>{f}
+                    </li>
+                  ))}
+                </ul>
+                <Link href={`/consulta?placa=${plate}&tipo=premium`}>
+                  <button className="w-full py-3 bg-gradient-to-r from-purple-600 to-violet-600 text-white font-bold text-sm rounded-xl hover:from-purple-700 hover:to-violet-700 transition-all"
+                    style={{ boxShadow: '0 4px 16px rgba(139,92,246,0.35)' }}>
+                    💎 Desbloquear Premium — 35 cr.
+                  </button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Comprar créditos */}
+            <div className="text-center mb-6">
+              <p className="text-sm text-slate-500 mb-2">Não tem créditos suficientes?</p>
+              <Link href="/comprar">
+                <button className="text-blue-600 font-semibold text-sm border border-blue-200 px-5 py-2 rounded-xl hover:bg-blue-50 transition-colors">
+                  💳 Comprar créditos
+                </button>
+              </Link>
+              <p className="text-xs text-slate-400 mt-2">Primeiro acesso? Cadastre-se e ganhe 5 créditos grátis</p>
+            </div>
 
             {/* Trust indicators */}
             <div className="grid grid-cols-3 gap-3">

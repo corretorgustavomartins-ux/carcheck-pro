@@ -11,11 +11,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const { plate, vehicleData, score, fairPrice, riskLevel } = await req.json()
+    const { plate, vehicleData, score, fairPrice, riskLevel, tipo, creditsConsumed } = await req.json()
 
     if (!plate || !vehicleData) {
       return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
     }
+
+    // Créditos a descontar: 16 para SMART, 35 para PREMIUM
+    const credits = typeof creditsConsumed === 'number' && creditsConsumed > 0
+      ? creditsConsumed
+      : (tipo === 'premium' ? 35 : 16)
 
     // Check credits
     const { data: wallet } = await supabase
@@ -24,19 +29,22 @@ export async function POST(req: NextRequest) {
       .eq('user_id', user.id)
       .single()
 
-    if (!wallet || wallet.balance < 16) {
-      return NextResponse.json({ error: 'Créditos insuficientes' }, { status: 402 })
+    if (!wallet || wallet.balance < credits) {
+      return NextResponse.json(
+        { error: `Créditos insuficientes. Necessário: ${credits}. Disponível: ${wallet?.balance ?? 0}` },
+        { status: 402 }
+      )
     }
 
     // Deduct credits using the DB function
     const { data: deducted, error: deductError } = await supabase
-      .rpc('deduct_credits', { p_user_id: user.id, p_amount: 16 })
+      .rpc('deduct_credits', { p_user_id: user.id, p_amount: credits })
 
     if (deductError || !deducted) {
       return NextResponse.json({ error: 'Erro ao deduzir créditos' }, { status: 500 })
     }
 
-    // Save report
+    // Save report (inclui tipo da consulta)
     const { data: report, error: reportError } = await supabase
       .from('vehicle_reports')
       .insert({
@@ -46,21 +54,23 @@ export async function POST(req: NextRequest) {
         fair_price: fairPrice,
         risk_level: riskLevel,
         api_payload_json: vehicleData,
-        credits_consumed: 16,
+        credits_consumed: credits,
+        report_type: tipo ?? 'smart',  // novo campo: 'smart' | 'premium'
       })
       .select()
       .single()
 
     if (reportError) {
       // Refund credits on error
-      await supabase.rpc('add_credits', { p_user_id: user.id, p_amount: 16 })
+      await supabase.rpc('add_credits', { p_user_id: user.id, p_amount: credits })
       return NextResponse.json({ error: 'Erro ao salvar relatório' }, { status: 500 })
     }
 
     return NextResponse.json({
       success: true,
       report_id: report.id,
-      credits_remaining: wallet.balance - 16,
+      credits_remaining: wallet.balance - credits,
+      report_type: tipo ?? 'smart',
     })
   } catch (err) {
     console.error('API error:', err)

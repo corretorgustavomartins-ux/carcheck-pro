@@ -53,15 +53,25 @@ export interface ConsultarPlacaResult {
   fipe:            number
   fipe_codigo:     string
   fipe_modelo:     string
+  // Extras exclusivos do plano Diamante (premium)
+  imagens:         string[]   // URLs das fotos do veículo
+  ficha_tecnica:   Record<string, string>  // dados técnicos extras
   // Raw para guardar no banco
   raw_json:        Record<string, unknown>
 }
 
+export type TipoConsulta = 'smart' | 'premium'
+
+// Mapeia nosso tipo interno para o plano da ConsultarPlaca API
+function mapTipo(tipo: TipoConsulta): string {
+  return tipo === 'premium' ? 'diamante' : 'ouro'
+}
+
 // ── Passo 1: solicitar relatório ────────────────────────────
-async function solicitarRelatorio(placa: string): Promise<string> {
+async function solicitarRelatorio(placa: string, tipo: TipoConsulta = 'smart'): Promise<string> {
   const form = new FormData()
   form.append('placa', placa)
-  form.append('tipo_consulta', 'ouro') // valores: 'bronze' | 'prata' | 'ouro' | 'diamante'
+  form.append('tipo_consulta', mapTipo(tipo)) // smart→ouro | premium→diamante
 
   const res = await fetch(`${BASE_URL}/v2/solicitarRelatorio`, {
     method:  'POST',
@@ -179,6 +189,19 @@ function parseResponse(dados: unknown[], placa: string): ConsultarPlacaResult {
     ? (recallBlocks[0] as any)?.registros?.[0]?.montadora ?? 'Recall registrado'
     : ''
 
+  /* ── Imagens (diamante) ── */
+  const imagensBlock  = get<any>('galeria_de_fotos')
+  const imagens: string[] = imagensBlock?.fotos?.map((f: any) => f.url ?? f).filter(Boolean) ?? []
+
+  /* ── Ficha Técnica (diamante) ── */
+  const fichBlock     = get<any>('ficha_tecnica_comparativa')
+  const fichaTecnica: Record<string, string> = {}
+  if (fichBlock?.itens) {
+    for (const item of fichBlock.itens) {
+      if (item.descricao && item.valor) fichaTecnica[item.descricao] = item.valor
+    }
+  }
+
   return {
     placa:               (dadosVeiculo.placa   ?? placa).toUpperCase(),
     chassi:              dadosVeiculo.chassi   ?? '',
@@ -206,6 +229,8 @@ function parseResponse(dados: unknown[], placa: string): ConsultarPlacaResult {
     fipe:                fipeValor,
     fipe_codigo:         fipeCodigo,
     fipe_modelo:         fipeModeloStr,
+    imagens,
+    ficha_tecnica:       fichaTecnica,
     raw_json:            { dados },
   }
 }
@@ -216,11 +241,11 @@ function parseResponse(dados: unknown[], placa: string): ConsultarPlacaResult {
  * Aguarda o processamento assíncrono da API via polling.
  * Lança exceção em caso de erro.
  */
-export async function consultarVeiculo(placa: string): Promise<ConsultarPlacaResult> {
+export async function consultarVeiculo(placa: string, tipo: TipoConsulta = 'smart'): Promise<ConsultarPlacaResult> {
   const cleanPlate = placa.toUpperCase().replace(/[^A-Z0-9]/g, '')
 
   // Passo 1: solicitar
-  const protocolo = await solicitarRelatorio(cleanPlate)
+  const protocolo = await solicitarRelatorio(cleanPlate, tipo)
 
   // Passo 2: aguardar e buscar resultado
   const dados = await consultarProtocolo(protocolo)
