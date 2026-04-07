@@ -69,6 +69,7 @@ export interface VehicleData {
   chassi_parcial?: string
   municipio_emplacamento?: string
   uf?: string
+  raw_api?: Record<string, unknown>
 }
 
 // ===== SCORE ENGINE =====
