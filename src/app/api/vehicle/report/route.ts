@@ -17,10 +17,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
     }
 
-    // Créditos a descontar: 16 para SMART, 35 para PREMIUM
+    // Créditos a descontar: 26 para SMART, 49 para COMPLETO/PREMIUM
     const credits = typeof creditsConsumed === 'number' && creditsConsumed > 0
       ? creditsConsumed
-      : (tipo === 'premium' ? 35 : 16)
+      : (tipo === 'completo' || tipo === 'premium' ? 49 : 26)
 
     // Check credits
     const { data: wallet } = await supabase

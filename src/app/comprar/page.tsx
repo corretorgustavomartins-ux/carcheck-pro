@@ -61,7 +61,7 @@ const PACKAGES = [
     obs: '✅ Inclui histórico completo de leilão',
   },
   {
-    id: 'smart',
+    id: 'pro',
     name: 'Pacote Profissional',
     price: 'R$ 89,90',
     credits: 98,
