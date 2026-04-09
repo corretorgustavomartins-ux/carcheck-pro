@@ -16,11 +16,13 @@ export default function DashboardPage() {
     const supabase = createClient()
 
     const loadData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
+      // getSession() lê do localStorage sem chamada de rede — mais confiável no cliente
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
         window.location.href = '/login'
         return
       }
+      const user = session.user
       setUser(user)
 
       // Load credits
