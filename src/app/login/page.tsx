@@ -36,7 +36,12 @@ export default function LoginPage() {
         setLoading(false)
         return
       }
-      if (data.session) { window.location.href = '/dashboard'; return }
+      if (data.session) {
+        // Aguarda o supabase salvar a sessão no storage antes de redirecionar
+        await new Promise(r => setTimeout(r, 500))
+        window.location.replace('/dashboard')
+        return
+      }
     } else {
       if (password.length < 6) {
         setError('A senha precisa ter pelo menos 6 caracteres.')
@@ -46,7 +51,6 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: `${window.location.origin}/dashboard` },
       })
       if (error) {
         if (error.message.includes('already registered') || error.message.includes('already been registered')) {
@@ -59,7 +63,9 @@ export default function LoginPage() {
       }
       // Confirmação desabilitada → sessão criada direto
       if (data.session) {
-        window.location.href = '/dashboard'
+        // Aguarda o supabase salvar a sessão no storage antes de redirecionar
+        await new Promise(r => setTimeout(r, 500))
+        window.location.replace('/dashboard')
         return
       }
       // Confirmação ainda ativa → mostrar mensagem

@@ -15,26 +15,15 @@ export default function DashboardPage() {
   useEffect(() => {
     const supabase = createClient()
 
-    const loadData = async () => {
-      // getSession() lê do localStorage sem chamada de rede — mais confiável no cliente
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        window.location.href = '/login'
-        return
-      }
-      const user = session.user
-      setUser(user)
-
-      // Load credits
-      const { data: wallet } = await supabase
+    const loadUserData = async (sb: any, user: any) => {
+      const { data: wallet } = await sb
         .from('credit_wallets')
         .select('balance')
         .eq('user_id', user.id)
         .single()
       setCredits(wallet?.balance ?? 0)
 
-      // Load recent reports
-      const { data: reps } = await supabase
+      const { data: reps } = await sb
         .from('vehicle_reports')
         .select('*')
         .eq('user_id', user.id)
@@ -43,6 +32,31 @@ export default function DashboardPage() {
       setReports(reps || [])
 
       setLoading(false)
+    }
+
+    const loadData = async () => {
+      // Pequeno delay para garantir que o storage foi inicializado
+      await new Promise(r => setTimeout(r, 300))
+
+      const { data: { session } } = await supabase.auth.getSession()
+
+      // Se não tem sessão, tenta mais uma vez após outro delay
+      if (!session) {
+        await new Promise(r => setTimeout(r, 700))
+        const { data: { session: session2 } } = await supabase.auth.getSession()
+        if (!session2) {
+          window.location.href = '/login'
+          return
+        }
+        const user = session2.user
+        setUser(user)
+        await loadUserData(supabase, user)
+        return
+      }
+
+      const user = session.user
+      setUser(user)
+      await loadUserData(supabase, user)
     }
 
     loadData()
