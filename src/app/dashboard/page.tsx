@@ -156,12 +156,59 @@ export default function DashboardPage() {
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
 
         {/* Welcome */}
-        <div style={{ marginBottom: 32 }}>
+        <div style={{ marginBottom: 24 }}>
           <h1 style={{ color: '#f8fafc', fontSize: 26, fontWeight: 800, margin: 0 }}>
             Olá, {userName} 👋
           </h1>
           <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>{user?.email}</p>
         </div>
+
+        {/* Banner CTA — Fazer consulta */}
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(37,99,235,0.25) 0%, rgba(6,182,212,0.15) 100%)',
+            border: '1px solid rgba(59,130,246,0.3)',
+            borderRadius: 20,
+            padding: '20px 28px',
+            marginBottom: 28,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            transition: 'border-color 0.2s',
+          }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(59,130,246,0.6)')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)')}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{
+                width: 48, height: 48,
+                background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                borderRadius: 14,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 22,
+                boxShadow: '0 4px 20px rgba(37,99,235,0.4)',
+                flexShrink: 0,
+              }}>🔍</div>
+              <div>
+                <div style={{ color: '#f8fafc', fontWeight: 700, fontSize: 16 }}>Consultar placa de veículo</div>
+                <div style={{ color: '#94a3b8', fontSize: 13, marginTop: 2 }}>Descubra o histórico completo, score e riscos do carro</div>
+              </div>
+            </div>
+            <div style={{
+              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+              borderRadius: 12,
+              padding: '10px 22px',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: 14,
+              whiteSpace: 'nowrap',
+              boxShadow: '0 4px 16px rgba(37,99,235,0.4)',
+            }}>
+              Consultar agora →
+            </div>
+          </div>
+        </Link>
 
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
@@ -219,8 +266,24 @@ export default function DashboardPage() {
                       fontSize: 14,
                       fontWeight: 700,
                       cursor: 'pointer',
+                      marginBottom: 10,
                     }}>
-                      Comprar créditos
+                      💳 Comprar créditos
+                    </button>
+                  </Link>
+                  <Link href="/#consulta">
+                    <button style={{
+                      width: '100%',
+                      background: 'transparent',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: 12,
+                      padding: '12px 0',
+                      color: '#94a3b8',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}>
+                      🔍 Ir para consulta
                     </button>
                   </Link>
                 </div>
