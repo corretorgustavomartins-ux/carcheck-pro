@@ -1,147 +1,109 @@
 'use client'
 
-import { useEffect, useState, Suspense, useRef } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { VehicleService } from '@/lib/vehicle-service'
 import { calculateScore } from '@/lib/score-engine'
 import { calculateFairPrice, formatCurrency } from '@/lib/pricing-engine'
 import { VehicleData, ScoreResult, PricingResult } from '@/types'
-import { ScoreMeter } from '@/components/ui/ScoreMeter'
-import { Card, AlertCard } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { formatDate, formatPlate, cn } from '@/lib/utils'
 import Link from 'next/link'
-import toast from 'react-hot-toast'
 
-// Configuração por tipo de consulta
-const CONSULTA_CONFIG = {
-  smart: {
-    label: 'SMART',
-    credits: 16,
-    color: 'blue',
-    icon: '🔍',
-    items: [
-      '✅ Dados completos do veículo',
-      '🏆 Score Anti-Bomba (0–100)',
-      '🚨 Verificação de sinistro',
-      '🔒 Verificação de gravame',
-      '💰 Preço Justo IA',
-      '📄 PDF do relatório',
-    ],
-  },
-  premium: {
-    label: 'PREMIUM',
-    credits: 35,
-    color: 'purple',
-    icon: '💎',
-    items: [
-      '✅ Tudo do plano SMART',
-      '🏷️ Histórico completo de leilão',
-      '🔔 Recall do fabricante',
-      '📷 Fotos oficiais do veículo',
-      '📋 Ficha técnica completa',
-      '🚓 Roubo/furto detalhado',
-      '📌 Débitos IPVA e multas',
-    ],
-  },
-} as const
+const S = {
+  page: {
+    minHeight: '100vh',
+    background: '#030712',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    paddingTop: 80,
+    paddingBottom: 60,
+    color: '#f8fafc',
+  } as React.CSSProperties,
+  center: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    minHeight: '80vh',
+  } as React.CSSProperties,
+  card: {
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: 20,
+    padding: 28,
+  } as React.CSSProperties,
+  wrap: { maxWidth: 720, margin: '0 auto', padding: '0 20px' } as React.CSSProperties,
+}
 
-type TipoConsulta = keyof typeof CONSULTA_CONFIG
+function LoadingScreen({ message, submessage }: { message: string; submessage?: string }) {
+  return (
+    <div style={{ ...S.page, ...S.center }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}`}</style>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ position: 'relative', width: 72, height: 72, margin: '0 auto 20px' }}>
+          <div style={{ position: 'absolute', inset: 0, border: '4px solid rgba(59,130,246,0.15)', borderRadius: '50%' }} />
+          <div style={{ position: 'absolute', inset: 0, border: '4px solid #3b82f6', borderTop: '4px solid transparent', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24 }}>🔍</div>
+        </div>
+        <p style={{ color: '#f8fafc', fontWeight: 700, fontSize: 16, marginBottom: 6 }}>{message}</p>
+        {submessage && <p style={{ color: '#64748b', fontSize: 13 }}>{submessage}</p>}
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 16 }}>
+          {[0, 1, 2].map(i => (
+            <div key={i} style={{ width: 8, height: 8, background: '#3b82f6', borderRadius: '50%', animation: `bounce 0.9s ease ${i * 0.2}s infinite` }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function ConsultaContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const plate = searchParams.get('placa') || ''
-  const tipoParam = (searchParams.get('tipo') || 'smart') as TipoConsulta
-  const tipo: TipoConsulta = tipoParam === 'premium' ? 'premium' : 'smart'
-  const config = CONSULTA_CONFIG[tipo]
+  const tipo = searchParams.get('tipo') === 'premium' ? 'premium' : 'smart'
+  const credits_needed = tipo === 'premium' ? 35 : 16
 
   const [step, setStep] = useState<'loading' | 'confirm' | 'processing' | 'report' | 'error'>('loading')
-  const [user, setUser] = useState<any>(null)
   const [credits, setCredits] = useState(0)
   const [vehicle, setVehicle] = useState<VehicleData | null>(null)
   const [score, setScore] = useState<ScoreResult | null>(null)
   const [pricing, setPricing] = useState<PricingResult | null>(null)
-  const [reportId, setReportId] = useState<string>('')
   const [error, setError] = useState('')
-  const reportRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (!plate) { window.location.href = '/'; return }
     const supabase = createClient()
-
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login?next=/consulta?placa=' + plate + '&tipo=' + tipo)
-        return
-      }
-      setUser(user)
-
-      const { data: wallet } = await supabase
-        .from('credit_wallets')
-        .select('balance')
-        .eq('user_id', user.id)
-        .single()
-
-      const balance = wallet?.balance ?? 0
-      setCredits(balance)
-
-      if (balance < config.credits) {
-        setError(`Créditos insuficientes. Você precisa de ${config.credits} créditos para consulta ${config.label}.`)
-        setStep('error')
-      } else {
-        setStep('confirm')
-      }
-    }
-
-    if (!plate) {
-      router.push('/')
-      return
-    }
-
-    init()
-  }, [plate, tipo])
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) { window.location.href = '/login'; return }
+      supabase.from('credit_wallets').select('balance').eq('user_id', session.user.id).single().then(({ data }) => {
+        const bal = data?.balance ?? 0
+        setCredits(bal)
+        if (bal < credits_needed) {
+          setError(`Créditos insuficientes. Você precisa de ${credits_needed} créditos.`)
+          setStep('error')
+        } else {
+          setStep('confirm')
+        }
+      })
+    })
+  }, [plate])
 
   const handleConfirm = async () => {
     setStep('processing')
     const supabase = createClient()
-
     try {
-      // 1. Buscar dados do veículo (passando o tipo)
-      const vehicleData = await VehicleService.getFullReport(plate, tipo)
+      const vehicleData = await VehicleService.getFullReport(plate, tipo as any)
       if (!vehicleData) throw new Error('Veículo não encontrado')
       setVehicle(vehicleData)
-
-      // 2. Calcular score
       const scoreResult = calculateScore(vehicleData)
       setScore(scoreResult)
-
-      // 3. Calcular preço justo
       const pricingResult = calculateFairPrice(vehicleData, scoreResult.total)
       setPricing(pricingResult)
 
-      // 4. Deduzir créditos e salvar relatório
       const res = await fetch('/api/vehicle/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          plate,
-          vehicleData,
-          score: scoreResult.total,
-          fairPrice: pricingResult.fair_price,
-          riskLevel: scoreResult.risk_level,
-          tipo,
-          creditsConsumed: config.credits,
-        }),
+        body: JSON.stringify({ plate, vehicleData, score: scoreResult.total, fairPrice: pricingResult.fair_price, riskLevel: scoreResult.risk_level, tipo, creditsConsumed: credits_needed }),
       })
-
       const data = await res.json()
-
       if (!res.ok) throw new Error(data.error || 'Erro ao salvar relatório')
-
-      setReportId(data.report_id)
-      setCredits(prev => prev - config.credits)
+      setCredits(prev => prev - credits_needed)
       setStep('report')
     } catch (err: any) {
       setError(err.message || 'Erro ao processar consulta')
@@ -149,205 +111,130 @@ function ConsultaContent() {
     }
   }
 
-  const handleDownloadPDF = async () => {
-    if (!reportRef.current || !vehicle || !score || !pricing) return
-
-    try {
-      toast.loading('Gerando PDF...', { id: 'pdf' })
-      const { generateVehiclePDF } = await import('@/lib/pdf-generator')
-      await generateVehiclePDF({ vehicle, score, pricing, reportId, plate })
-      toast.success('PDF gerado com sucesso!', { id: 'pdf' })
-    } catch {
-      toast.error('Erro ao gerar PDF', { id: 'pdf' })
-    }
-  }
-
-  // ─── Loading ───
   if (step === 'loading') return <LoadingScreen message="Verificando créditos..." />
+  if (step === 'processing') return <LoadingScreen message={`Gerando relatório ${tipo.toUpperCase()}...`} submessage="Verificando sinistro, gravame e calculando score..." />
 
-  // ─── Confirm ───
-  if (step === 'confirm') {
-    const isPremium = tipo === 'premium'
-    return (
-      <div className="min-h-screen bg-slate-50 pt-20 flex items-center justify-center px-4">
-        <Card className="max-w-md w-full" shadow="lg">
-          <div className="text-center mb-6">
-            <div className="text-5xl mb-3">{config.icon}</div>
-            <h2 className="text-xl font-black text-slate-900">
-              Confirmar consulta {config.label}
-            </h2>
-            {isPremium && (
-              <div className="inline-block mt-2 px-3 py-1 bg-gradient-to-r from-purple-100 to-violet-100 text-purple-700 text-xs font-bold rounded-full border border-purple-200">
-                ⭐ Relatório Diamante — máximo detalhamento
-              </div>
-            )}
-            <p className="text-slate-500 text-sm mt-2">
-              Placa: <strong>{formatPlate(plate)}</strong>
-            </p>
-          </div>
-
-          <div className={cn(
-            'border rounded-xl p-4 mb-6',
-            isPremium ? 'bg-purple-50 border-purple-200' : 'bg-blue-50 border-blue-200'
-          )}>
-            <div className="font-semibold text-slate-700 text-sm mb-3">O que você receberá:</div>
-            <ul className="space-y-1.5">
-              {config.items.map((item, i) => (
-                <li key={i} className="text-sm text-slate-600">{item}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="flex items-center justify-between bg-slate-50 rounded-xl px-4 py-3 mb-6">
-            <span className="text-slate-700 font-semibold">Custo da consulta</span>
-            <span className={cn(
-              'font-black text-lg',
-              isPremium ? 'text-purple-600' : 'text-blue-600'
-            )}>
-              {config.credits} créditos
-            </span>
-          </div>
-
-          <div className="text-xs text-slate-500 text-center mb-4">
-            Saldo atual: <strong>{credits} créditos</strong> → Após: <strong>{credits - config.credits} créditos</strong>
-          </div>
-
-          <Button
-            onClick={handleConfirm}
-            fullWidth
-            size="lg"
-            className={isPremium
-              ? 'bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700'
-              : undefined
-            }
-          >
-            {config.icon} Confirmar — descontar {config.credits} créditos
-          </Button>
-
-          {/* Upsell: se for smart, oferece premium */}
-          {!isPremium && (
-            <div className="mt-4 p-3 bg-purple-50 border border-purple-200 rounded-xl text-center">
-              <p className="text-xs text-purple-700 mb-2">
-                💎 Quer o relatório mais completo? Inclui recall, fotos e ficha técnica.
-              </p>
-              <Link href={`/consulta?placa=${plate}&tipo=premium`}>
-                <button className="text-purple-600 font-bold text-xs border border-purple-300 px-4 py-1.5 rounded-lg hover:bg-purple-100 transition-colors">
-                  Upgradar para PREMIUM (35 cr.)
-                </button>
-              </Link>
-            </div>
-          )}
-
-          <Link href="/dashboard">
-            <Button variant="ghost" fullWidth size="sm" className="mt-2">
-              ← Cancelar
-            </Button>
+  if (step === 'error') return (
+    <div style={{ ...S.page, ...S.center }}>
+      <div style={{ ...S.card, maxWidth: 420, width: '100%', margin: '0 20px', textAlign: 'center' }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+        <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Ops, algo deu errado</h2>
+        <p style={{ color: '#94a3b8', fontSize: 14, marginBottom: 24 }}>{error}</p>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <Link href="/comprar" style={{ flex: 1 }}>
+            <button style={{ width: '100%', background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', border: 'none', borderRadius: 12, padding: '12px 0', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>Comprar créditos</button>
           </Link>
-        </Card>
+          <Link href="/dashboard" style={{ flex: 1 }}>
+            <button style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '12px 0', color: '#94a3b8', fontWeight: 700, cursor: 'pointer' }}>Dashboard</button>
+          </Link>
+        </div>
       </div>
-    )
-  }
+    </div>
+  )
 
-  // ─── Processing ───
-  if (step === 'processing') {
-    return <LoadingScreen
-      message={`Gerando relatório ${config.label}...`}
-      submessage="Verificando sinistro, gravame e calculando score..."
-    />
-  }
+  if (step === 'confirm') return (
+    <div style={{ ...S.page, ...S.center }}>
+      <div style={{ ...S.card, maxWidth: 460, width: '100%', margin: '0 20px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>{tipo === 'premium' ? '💎' : '🔍'}</div>
+          <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 6 }}>Confirmar consulta {tipo.toUpperCase()}</h2>
+          <p style={{ color: '#94a3b8', fontSize: 14 }}>Placa: <strong style={{ color: '#f8fafc' }}>{plate}</strong></p>
+        </div>
 
-  // ─── Error ───
-  if (step === 'error') {
-    return (
-      <div className="min-h-screen bg-slate-50 pt-20 flex items-center justify-center px-4">
-        <Card className="max-w-md w-full text-center py-10" shadow="lg">
-          <div className="text-5xl mb-4">⚠️</div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">Ops, algo deu errado</h2>
-          <p className="text-slate-500 text-sm mb-6">{error}</p>
-          <div className="flex gap-3">
-            <Link href="/comprar" className="flex-1">
-              <Button fullWidth>Comprar créditos</Button>
-            </Link>
-            <Link href="/dashboard" className="flex-1">
-              <Button variant="outline" fullWidth>Dashboard</Button>
-            </Link>
-          </div>
-        </Card>
+        <div style={{ background: tipo === 'premium' ? 'rgba(167,139,250,0.08)' : 'rgba(59,130,246,0.08)', border: `1px solid ${tipo === 'premium' ? 'rgba(167,139,250,0.2)' : 'rgba(59,130,246,0.2)'}`, borderRadius: 14, padding: 18, marginBottom: 20 }}>
+          <p style={{ color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 10 }}>O que você receberá:</p>
+          {(tipo === 'smart' ? [
+            '✅ Dados completos do veículo',
+            '🏆 Score Anti-Bomba (0–100)',
+            '🚨 Verificação de sinistro',
+            '🔒 Verificação de gravame',
+            '💰 Preço Justo IA',
+          ] : [
+            '✅ Tudo do plano SMART',
+            '🏷️ Histórico completo de leilão',
+            '🔔 Recall do fabricante',
+            '📋 Ficha técnica completa',
+            '📌 Débitos IPVA e multas',
+          ]).map((item, i) => (
+            <p key={i} style={{ color: '#cbd5e1', fontSize: 13, marginBottom: 4 }}>{item}</p>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '12px 16px', marginBottom: 8 }}>
+          <span style={{ color: '#94a3b8', fontSize: 14 }}>Custo</span>
+          <span style={{ color: tipo === 'premium' ? '#a78bfa' : '#60a5fa', fontWeight: 800, fontSize: 18 }}>{credits_needed} créditos</span>
+        </div>
+        <p style={{ color: '#475569', fontSize: 12, textAlign: 'center', marginBottom: 20 }}>
+          Saldo atual: {credits} → Após: {credits - credits_needed} créditos
+        </p>
+
+        <button onClick={handleConfirm} style={{ width: '100%', background: tipo === 'premium' ? 'linear-gradient(135deg,#7c3aed,#6d28d9)' : 'linear-gradient(135deg,#3b82f6,#1d4ed8)', border: 'none', borderRadius: 14, padding: '15px 0', color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', boxShadow: '0 4px 20px rgba(37,99,235,0.35)', marginBottom: 12 }}>
+          {tipo === 'premium' ? '💎' : '🔍'} Confirmar — {credits_needed} créditos
+        </button>
+
+        <Link href="/dashboard">
+          <button style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '12px 0', color: '#64748b', fontSize: 14, cursor: 'pointer' }}>
+            ← Cancelar
+          </button>
+        </Link>
       </div>
-    )
-  }
+    </div>
+  )
 
-  // ─── Report ───
   if (step === 'report' && vehicle && score && pricing) {
-    const isPremium = tipo === 'premium'
-    const rawApi = vehicle.raw_api as any
+    const riskColor = score.risk_level === 'safe' ? '#34d399' : score.risk_level === 'attention' ? '#fb923c' : '#f87171'
+    const riskBg = score.risk_level === 'safe' ? 'rgba(52,211,153,0.15)' : score.risk_level === 'attention' ? 'rgba(251,146,60,0.15)' : 'rgba(248,113,113,0.15)'
+    const riskLabel = score.risk_level === 'safe' ? '✅ Seguro para compra' : score.risk_level === 'attention' ? '⚠️ Atenção necessária' : '🚨 Risco alto'
 
     return (
-      <div className="min-h-screen bg-slate-50 pt-20 pb-16">
-        <div className="max-w-3xl mx-auto px-4 py-8" ref={reportRef}>
-          {/* Report Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div style={S.page}>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+        <div style={S.wrap}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Relatório</div>
-                <span className={cn(
-                  'text-xs font-black px-2 py-0.5 rounded-full',
-                  isPremium
-                    ? 'bg-purple-100 text-purple-700'
-                    : 'bg-blue-100 text-blue-700'
-                )}>{config.label}</span>
-              </div>
-              <h1 className="text-2xl font-black text-slate-900">
-                {vehicle.marca} {vehicle.modelo} {vehicle.ano}
-              </h1>
-              <p className="text-slate-500 text-sm mt-0.5">
-                {formatPlate(vehicle.placa)} • {vehicle.cidade}, {vehicle.uf}
-              </p>
+              <p style={{ color: '#64748b', fontSize: 12, fontWeight: 600, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>Relatório {tipo.toUpperCase()}</p>
+              <h1 style={{ fontSize: 24, fontWeight: 900, margin: 0 }}>{vehicle.marca} {vehicle.modelo} {vehicle.ano}</h1>
+              <p style={{ color: '#64748b', fontSize: 13, marginTop: 4 }}>Placa: {vehicle.placa} • {vehicle.cidade}, {vehicle.uf}</p>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={handleDownloadPDF} variant="outline" size="sm">📄 Baixar PDF</Button>
-              <Link href="/dashboard">
-                <Button variant="ghost" size="sm">← Dashboard</Button>
-              </Link>
-            </div>
+            <Link href="/dashboard">
+              <button style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '10px 18px', color: '#94a3b8', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                ← Dashboard
+              </button>
+            </Link>
           </div>
 
           {/* Score Hero */}
-          <Card className="mb-6 overflow-hidden" shadow="lg">
-            <div className={cn(
-              'bg-gradient-to-r px-6 py-5 -mx-6 -mt-6 mb-6',
-              score.risk_level === 'safe' ? 'from-emerald-600 to-emerald-700' :
-              score.risk_level === 'attention' ? 'from-amber-500 to-amber-600' :
-              'from-red-600 to-red-700'
-            )}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-white font-black text-xl">Score Anti-Bomba</h2>
-                  <p className="text-white/70 text-sm">{score.risk_label}</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-5xl font-black text-white">{score.total}</div>
-                  <div className="text-white/70 text-sm">/100</div>
-                </div>
+          <div style={{ ...S.card, background: riskBg, border: `1px solid ${riskColor}33`, marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, marginBottom: 4 }}>Score Anti-Bomba</h2>
+                <span style={{ background: riskBg, color: riskColor, border: `1px solid ${riskColor}44`, borderRadius: 999, padding: '4px 14px', fontSize: 13, fontWeight: 700 }}>{riskLabel}</span>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: 52, fontWeight: 900, color: riskColor, lineHeight: 1 }}>{score.total}</div>
+                <div style={{ color: '#64748b', fontSize: 13 }}>/100</div>
               </div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <ScoreItem label="Sinistro" value={vehicle.sinistro ? 'Encontrado 🚨' : 'Limpo ✅'} color={vehicle.sinistro ? 'text-red-600' : 'text-emerald-600'} bg={vehicle.sinistro ? 'bg-red-50' : 'bg-emerald-50'} />
-              <ScoreItem label="Gravame"  value={vehicle.gravame  ? 'Ativo ⚠️'     : 'Livre ✅'} color={vehicle.gravame  ? 'text-amber-600' : 'text-emerald-600'} bg={vehicle.gravame  ? 'bg-amber-50' : 'bg-emerald-50'} />
-              <ScoreItem
-                label="Restrições"
-                value={vehicle.restricoes && vehicle.restricoes.length > 0 ? `${vehicle.restricoes.length} encontrada(s) ⚠️` : 'Nenhuma ✅'}
-                color={vehicle.restricoes && vehicle.restricoes.length > 0 ? 'text-amber-600' : 'text-emerald-600'}
-                bg={vehicle.restricoes && vehicle.restricoes.length > 0 ? 'bg-amber-50' : 'bg-emerald-50'}
-              />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
+              {[
+                { label: 'Sinistro', val: vehicle.sinistro ? '🚨 Encontrado' : '✅ Limpo', alert: vehicle.sinistro },
+                { label: 'Gravame', val: vehicle.gravame ? '⚠️ Ativo' : '✅ Livre', alert: vehicle.gravame },
+                { label: 'Restrições', val: vehicle.restricoes?.length ? `⚠️ ${vehicle.restricoes.length} encontrada(s)` : '✅ Nenhuma', alert: !!vehicle.restricoes?.length },
+              ].map((item, i) => (
+                <div key={i} style={{ background: item.alert ? 'rgba(248,113,113,0.08)' : 'rgba(52,211,153,0.08)', borderRadius: 12, padding: '12px 14px' }}>
+                  <div style={{ color: '#64748b', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>{item.label}</div>
+                  <div style={{ color: item.alert ? '#f87171' : '#34d399', fontWeight: 700, fontSize: 13 }}>{item.val}</div>
+                </div>
+              ))}
             </div>
-          </Card>
+          </div>
 
-          {/* Vehicle Data */}
-          <Card className="mb-6" shadow="md">
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><span className="text-xl">🚗</span> Dados do veículo</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          {/* Dados do veículo */}
+          <div style={{ ...S.card, marginBottom: 20 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>🚗 Dados do veículo</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 10 }}>
               {[
                 { label: 'Marca', value: vehicle.marca },
                 { label: 'Modelo', value: vehicle.modelo },
@@ -358,174 +245,99 @@ function ConsultaContent() {
                 { label: 'Cor', value: vehicle.cor || '-' },
                 { label: 'Cidade', value: `${vehicle.cidade}, ${vehicle.uf}` },
                 { label: 'FIPE', value: formatCurrency(vehicle.fipe) },
-              ].map((item) => (
-                <div key={item.label} className="bg-slate-50 rounded-xl p-3">
-                  <div className="text-xs text-slate-400 uppercase tracking-wide">{item.label}</div>
-                  <div className="font-semibold text-slate-800 text-sm mt-0.5">{item.value}</div>
+              ].map(item => (
+                <div key={item.label} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '10px 14px' }}>
+                  <div style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>{item.label}</div>
+                  <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 13, marginTop: 3 }}>{item.value}</div>
                 </div>
               ))}
             </div>
-          </Card>
+          </div>
 
-          {/* PREMIUM EXTRAS */}
-          {isPremium && rawApi && (
-            <>
-              {/* Recall */}
-              {rawApi.recall && (
-                <Card className="mb-6 border-l-4 border-orange-400" shadow="md">
-                  <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-                    <span className="text-xl">🔔</span> Recall
-                    <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full">Atenção</span>
-                  </h3>
-                  <p className="text-sm text-slate-700">{rawApi.recall_descricao || 'Recall registrado pelo fabricante. Verifique com a concessionária.'}</p>
-                </Card>
-              )}
-
-              {/* Leilão detalhado */}
-              {rawApi.leilao && (
-                <Card className="mb-6 border-l-4 border-red-400" shadow="md">
-                  <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-                    <span className="text-xl">🏷️</span> Histórico de Leilão
-                    <span className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
-                      Classe {rawApi.leilao_classificacao || '?'}
-                    </span>
-                  </h3>
-                  <p className="text-sm text-slate-700">
-                    Veículo possui registro de leilão.{' '}
-                    {rawApi.leilao_classificacao === 'D'
-                      ? 'Classe D indica perda total — risco alto.'
-                      : rawApi.leilao_classificacao === 'C'
-                      ? 'Classe C indica danos severos.'
-                      : 'Verifique os detalhes antes de comprar.'}
-                  </p>
-                </Card>
-              )}
-
-              {/* Débitos */}
-              {(rawApi.debitos_ipva || rawApi.debitos_multa) && (
-                <Card className="mb-6 border-l-4 border-yellow-400" shadow="md">
-                  <h3 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-                    <span className="text-xl">📌</span> Débitos Pendentes
-                  </h3>
-                  <div className="flex gap-4">
-                    {rawApi.debitos_ipva && <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1.5 rounded-lg">⚠️ IPVA pendente</span>}
-                    {rawApi.debitos_multa && <span className="text-sm font-semibold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-lg">⚠️ Multas pendentes</span>}
-                  </div>
-                </Card>
-              )}
-
-              {/* Imagens */}
-              {rawApi.imagens && Array.isArray(rawApi.imagens) && rawApi.imagens.length > 0 && (
-                <Card className="mb-6" shadow="md">
-                  <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><span className="text-xl">📷</span> Fotos Oficiais</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {rawApi.imagens.slice(0, 6).map((url: string, i: number) => (
-                      <img key={i} src={url} alt={`Foto ${i+1}`} className="rounded-xl w-full h-28 object-cover border border-slate-200" />
-                    ))}
-                  </div>
-                </Card>
-              )}
-
-              {/* Ficha Técnica */}
-              {rawApi.ficha_tecnica && Object.keys(rawApi.ficha_tecnica).length > 0 && (
-                <Card className="mb-6" shadow="md">
-                  <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><span className="text-xl">📋</span> Ficha Técnica</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {Object.entries(rawApi.ficha_tecnica).slice(0, 12).map(([k, v]) => (
-                      <div key={k} className="bg-slate-50 rounded-xl p-3">
-                        <div className="text-xs text-slate-400 uppercase tracking-wide">{k}</div>
-                        <div className="font-semibold text-slate-800 text-sm mt-0.5">{String(v)}</div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
-            </>
-          )}
-
-          {/* Alerts */}
+          {/* Alertas */}
           {score.alerts.length > 0 && (
-            <Card className="mb-6" shadow="md">
-              <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><span className="text-xl">🚨</span> Alertas encontrados</h3>
-              <div className="space-y-3">
+            <div style={{ ...S.card, marginBottom: 20 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>🚨 Alertas encontrados</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {score.alerts.map((alert, i) => (
-                  <AlertCard key={i} type={alert.type} title={alert.title} description={alert.description} icon={alert.icon} />
+                  <div key={i} style={{ background: alert.type === 'danger' ? 'rgba(248,113,113,0.08)' : 'rgba(251,146,60,0.08)', border: `1px solid ${alert.type === 'danger' ? 'rgba(248,113,113,0.2)' : 'rgba(251,146,60,0.2)'}`, borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 12 }}>
+                    <span style={{ fontSize: 20 }}>{alert.icon}</span>
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{alert.title}</div>
+                      <div style={{ color: '#94a3b8', fontSize: 13 }}>{alert.description}</div>
+                    </div>
+                  </div>
                 ))}
               </div>
-            </Card>
+            </div>
           )}
 
-          {/* Fair Price */}
-          <Card className="mb-6" shadow="md">
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><span className="text-xl">💰</span> Preço Justo IA</h3>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="bg-slate-50 rounded-xl p-4 text-center">
-                <div className="text-xs text-slate-400 uppercase tracking-wide mb-1">FIPE</div>
-                <div className="text-xl font-black text-slate-800">{formatCurrency(pricing.fipe_value)}</div>
+          {/* Preço Justo */}
+          <div style={{ ...S.card, marginBottom: 20 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>💰 Preço Justo IA</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 14, padding: '16px', textAlign: 'center' }}>
+                <div style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>FIPE</div>
+                <div style={{ fontSize: 20, fontWeight: 900 }}>{formatCurrency(pricing.fipe_value)}</div>
               </div>
-              <div className={cn('rounded-xl p-4 text-center', pricing.discount_percent === 0 ? 'bg-emerald-50' : 'bg-blue-50')}>
-                <div className="text-xs text-slate-400 uppercase tracking-wide mb-1">Preço justo</div>
-                <div className={cn('text-xl font-black', pricing.discount_percent === 0 ? 'text-emerald-700' : 'text-blue-700')}>
-                  {formatCurrency(pricing.fair_price)}
-                </div>
+              <div style={{ background: 'rgba(52,211,153,0.08)', borderRadius: 14, padding: '16px', textAlign: 'center' }}>
+                <div style={{ color: '#475569', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Preço justo</div>
+                <div style={{ fontSize: 20, fontWeight: 900, color: '#34d399' }}>{formatCurrency(pricing.fair_price)}</div>
               </div>
             </div>
             {pricing.discount_percent > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-blue-700 font-semibold text-sm">Desconto recomendado</span>
-                  <span className="text-blue-800 font-black">{pricing.discount_percent}% ({formatCurrency(pricing.discount_value)})</span>
-                </div>
+              <div style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 12, padding: '12px 16px', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#94a3b8', fontSize: 14 }}>Desconto recomendado</span>
+                <span style={{ color: '#60a5fa', fontWeight: 800 }}>{pricing.discount_percent}% ({formatCurrency(pricing.discount_value)})</span>
               </div>
             )}
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <div className="text-sm font-semibold text-amber-800 mb-1">💡 Dica de negociação</div>
-              <div className="text-sm text-amber-700">{pricing.negotiation_tip}</div>
+            <div style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.15)', borderRadius: 12, padding: '12px 16px' }}>
+              <div style={{ color: '#fbbf24', fontWeight: 700, fontSize: 13, marginBottom: 4 }}>💡 Dica de negociação</div>
+              <div style={{ color: '#94a3b8', fontSize: 13 }}>{pricing.negotiation_tip}</div>
             </div>
-          </Card>
+          </div>
 
-          {/* Recommendations */}
+          {/* Recomendações */}
           {score.recommendations.length > 0 && (
-            <Card className="mb-6" shadow="md">
-              <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><span className="text-xl">✅</span> Recomendações</h3>
-              <ul className="space-y-2">
+            <div style={{ ...S.card, marginBottom: 20 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 14 }}>✅ Recomendações</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {score.recommendations.map((rec, i) => (
-                  <li key={i} className="flex items-start gap-3 text-sm text-slate-700">
-                    <span className="text-blue-500 flex-shrink-0 mt-0.5">→</span>{rec}
-                  </li>
+                  <div key={i} style={{ display: 'flex', gap: 10, fontSize: 13, color: '#cbd5e1' }}>
+                    <span style={{ color: '#3b82f6', flexShrink: 0 }}>→</span>{rec}
+                  </div>
                 ))}
-              </ul>
-            </Card>
-          )}
-
-          {/* Upsell — se for smart, oferecer premium */}
-          {!isPremium && (
-            <Card className="mb-6 border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-violet-50" shadow="md">
-              <div className="flex items-start gap-4">
-                <div className="text-3xl">💎</div>
-                <div className="flex-1">
-                  <h3 className="font-black text-slate-900 mb-1">Quer ainda mais informações?</h3>
-                  <p className="text-sm text-slate-600 mb-3">
-                    O relatório PREMIUM inclui recall, fotos oficiais, ficha técnica, histórico de leilão e débitos — por apenas 35 créditos.
-                  </p>
-                  <Link href={`/consulta?placa=${plate}&tipo=premium`}>
-                    <button className="bg-gradient-to-r from-purple-600 to-violet-600 text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:from-purple-700 hover:to-violet-700 transition-all shadow-md">
-                      Consultar Premium — 35 créditos
-                    </button>
-                  </Link>
-                </div>
               </div>
-            </Card>
+            </div>
           )}
 
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button onClick={handleDownloadPDF} size="lg" className="flex-1">📄 Baixar PDF completo</Button>
-            <Link href="/dashboard" className="flex-1">
-              <Button variant="outline" size="lg" fullWidth>🏠 Dashboard</Button>
+          {/* Upsell Premium */}
+          {tipo === 'smart' && (
+            <div style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.25)', borderRadius: 20, padding: 24, marginBottom: 24, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 32 }}>💎</span>
+              <div>
+                <h3 style={{ fontWeight: 800, fontSize: 15, marginBottom: 6 }}>Quer ainda mais informações?</h3>
+                <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 14 }}>O relatório PREMIUM inclui recall, fotos oficiais, ficha técnica e débitos.</p>
+                <Link href={`/consulta?placa=${plate}&tipo=premium`}>
+                  <button style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', border: 'none', borderRadius: 10, padding: '10px 20px', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                    Consultar Premium — 35 créditos
+                  </button>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Ações */}
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <Link href="/" style={{ flex: 1, minWidth: 140 }}>
+              <button style={{ width: '100%', background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', border: 'none', borderRadius: 14, padding: '14px 0', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                🔍 Nova consulta
+              </button>
             </Link>
-            <Link href="/" className="flex-1">
-              <Button variant="ghost" size="lg" fullWidth>🔍 Nova consulta</Button>
+            <Link href="/dashboard" style={{ flex: 1, minWidth: 140 }}>
+              <button style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: '14px 0', color: '#94a3b8', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                🏠 Dashboard
+              </button>
             </Link>
           </div>
         </div>
@@ -534,36 +346,6 @@ function ConsultaContent() {
   }
 
   return null
-}
-
-function ScoreItem({ label, value, color, bg }: { label: string, value: string, color: string, bg: string }) {
-  return (
-    <div className={`${bg} rounded-xl p-4`}>
-      <div className="text-xs text-slate-500 uppercase tracking-wide mb-1">{label}</div>
-      <div className={`font-bold text-sm ${color}`}>{value}</div>
-    </div>
-  )
-}
-
-function LoadingScreen({ message, submessage }: { message: string, submessage?: string }) {
-  return (
-    <div className="min-h-screen bg-slate-50 pt-20 flex items-center justify-center">
-      <div className="text-center max-w-xs">
-        <div className="relative w-20 h-20 mx-auto mb-6">
-          <div className="absolute inset-0 border-4 border-blue-100 rounded-full" />
-          <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <div className="absolute inset-0 flex items-center justify-center text-2xl">🔍</div>
-        </div>
-        <h3 className="text-lg font-bold text-slate-800 mb-2">{message}</h3>
-        {submessage && <p className="text-slate-500 text-sm">{submessage}</p>}
-        <div className="flex justify-center gap-1.5 mt-4">
-          {[0, 1, 2].map(i => (
-            <div key={i} className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-          ))}
-        </div>
-      </div>
-    </div>
-  )
 }
 
 export default function ConsultaPage() {
