@@ -26,10 +26,16 @@ function ResultadoContent() {
     setLoading(true)
     setError('')
     try {
-      const data = await VehicleService.getPreview(plate)
-      setPreview(data)
-    } catch {
-      setError('Erro ao consultar placa. Tente novamente.')
+      // Chama via API route (server-side) para ter acesso às env vars
+      const res = await fetch(`/api/vehicle/preview?plate=${plate}`)
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Erro ao consultar placa')
+      }
+      const data = await res.json()
+      setPreview(data.data)
+    } catch (err: any) {
+      setError(err.message || 'Erro ao consultar placa. Tente novamente.')
     } finally {
       setLoading(false)
     }
