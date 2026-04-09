@@ -17,7 +17,7 @@ export default function LoginPage() {
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace('/dashboard')
+      if (session) window.location.href = '/dashboard'
     })
   }, [])
 
@@ -36,7 +36,7 @@ export default function LoginPage() {
         setLoading(false)
         return
       }
-      if (data.session) router.replace('/dashboard')
+      if (data.session) { window.location.href = '/dashboard'; return }
     } else {
       if (password.length < 6) {
         setError('A senha precisa ter pelo menos 6 caracteres.')
@@ -59,7 +59,7 @@ export default function LoginPage() {
       }
       // Confirmação desabilitada → sessão criada direto
       if (data.session) {
-        router.replace('/dashboard')
+        window.location.href = '/dashboard'
         return
       }
       // Confirmação ainda ativa → mostrar mensagem
