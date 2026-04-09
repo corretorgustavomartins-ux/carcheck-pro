@@ -12,8 +12,16 @@ export default function LoginPage() {
   const supabase = createClient()
 
   useEffect(() => {
+    // Verifica se já está logado ao carregar a página
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.push('/dashboard')
+      }
+    })
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+      console.log('Auth event:', event, session?.user?.email)
+      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
         router.push('/dashboard')
       }
     })
