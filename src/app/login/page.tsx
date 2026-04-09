@@ -1,9 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Auth } from '@supabase/auth-ui-react'
-import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -11,22 +9,85 @@ export default function LoginPage() {
   const router = useRouter()
   const supabase = createClient()
 
+  const [tab, setTab] = useState<'login' | 'signup'>('login')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
+  // Se já estiver logado, vai pro dashboard
   useEffect(() => {
-    // Verifica se já está logado ao carregar a página
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        router.push('/dashboard')
+      if (session) router.replace('/dashboard')
+    })
+  }, [])
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      if (error.message.includes('Email not confirmed')) {
+        setError('Email não confirmado. Verifique sua caixa de entrada.')
+      } else if (error.message.includes('Invalid login credentials')) {
+        setError('Email ou senha incorretos.')
+      } else {
+        setError(error.message)
       }
+      setLoading(false)
+      return
+    }
+
+    if (data.session) {
+      router.replace('/dashboard')
+    }
+  }
+
+  async function handleSignup(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    setSuccess('')
+    setLoading(true)
+
+    if (password.length < 6) {
+      setError('A senha precisa ter pelo menos 6 caracteres.')
+      setLoading(false)
+      return
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        // Redirecionar após confirmação (caso esteja ativada)
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+      },
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth event:', event, session?.user?.email)
-      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
-        router.push('/dashboard')
+    if (error) {
+      if (error.message.includes('already registered') || error.message.includes('User already registered')) {
+        setError('Este email já está cadastrado. Faça login.')
+      } else {
+        setError(error.message)
       }
-    })
-    return () => subscription.unsubscribe()
-  }, [])
+      setLoading(false)
+      return
+    }
+
+    // Se sessão criada direto (confirmação desabilitada) → vai pro dashboard
+    if (data.session) {
+      router.replace('/dashboard')
+      return
+    }
+
+    // Se precisar confirmar email
+    setSuccess('Conta criada! Verifique seu email para confirmar e acessar.')
+    setLoading(false)
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex items-center justify-center px-4 pt-16">
@@ -51,86 +112,81 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Auth Form */}
+        {/* Card */}
         <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-2xl">
-          <Auth
-            supabaseClient={supabase}
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: '#3b82f6',
-                    brandAccent: '#2563eb',
-                    brandButtonText: 'white',
-                    defaultButtonBackground: 'rgba(255,255,255,0.05)',
-                    defaultButtonBackgroundHover: 'rgba(255,255,255,0.1)',
-                    defaultButtonBorder: 'rgba(255,255,255,0.15)',
-                    defaultButtonText: 'white',
-                    dividerBackground: 'rgba(255,255,255,0.1)',
-                    inputBackground: 'rgba(255,255,255,0.05)',
-                    inputBorder: 'rgba(255,255,255,0.15)',
-                    inputBorderHover: '#3b82f6',
-                    inputBorderFocus: '#3b82f6',
-                    inputText: 'white',
-                    inputLabelText: 'rgba(255,255,255,0.7)',
-                    inputPlaceholder: 'rgba(255,255,255,0.3)',
-                    messageText: 'rgba(255,255,255,0.7)',
-                    anchorTextColor: '#60a5fa',
-                    anchorTextHoverColor: '#93c5fd',
-                  },
-                  radii: {
-                    borderRadiusButton: '12px',
-                    buttonBorderRadius: '12px',
-                    inputBorderRadius: '12px',
-                  },
-                  fontSizes: {
-                    baseBodySize: '14px',
-                    baseInputSize: '14px',
-                    baseLabelSize: '12px',
-                    baseButtonSize: '14px',
-                  },
-                },
-              },
-              className: {
-                container: 'space-y-4',
-                button: 'font-semibold',
-              },
-            }}
-            providers={['google']}
-            localization={{
-              variables: {
-                sign_in: {
-                  email_label: 'Email',
-                  password_label: 'Senha',
-                  email_input_placeholder: 'seu@email.com',
-                  password_input_placeholder: 'Sua senha',
-                  button_label: 'Entrar',
-                  social_provider_text: 'Entrar com {{provider}}',
-                  link_text: 'Já tem conta? Entre',
-                },
-                sign_up: {
-                  email_label: 'Email',
-                  password_label: 'Senha',
-                  email_input_placeholder: 'seu@email.com',
-                  password_input_placeholder: 'Crie uma senha forte',
-                  button_label: 'Criar conta',
-                  social_provider_text: 'Cadastrar com {{provider}}',
-                  link_text: 'Não tem conta? Cadastre-se',
-                  confirmation_text: 'Verifique seu email para confirmar o cadastro',
-                },
-                forgotten_password: {
-                  email_label: 'Email',
-                  password_label: 'Nova senha',
-                  email_input_placeholder: 'seu@email.com',
-                  button_label: 'Enviar instruções',
-                  link_text: 'Esqueceu a senha?',
-                  confirmation_text: 'Verifique seu email para redefinir a senha',
-                },
-              },
-            }}
-            redirectTo={typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined}
-          />
+          {/* Tabs */}
+          <div className="flex mb-6 bg-white/5 rounded-2xl p-1">
+            <button
+              onClick={() => { setTab('login'); setError(''); setSuccess('') }}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                tab === 'login'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Entrar
+            </button>
+            <button
+              onClick={() => { setTab('signup'); setError(''); setSuccess('') }}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                tab === 'signup'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              Criar conta
+            </button>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={tab === 'login' ? handleLogin : handleSignup} className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">Senha</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder={tab === 'signup' ? 'Mínimo 6 caracteres' : 'Sua senha'}
+                className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3 text-sm text-emerald-400">
+                {success}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+            >
+              {loading
+                ? (tab === 'login' ? 'Entrando...' : 'Criando conta...')
+                : (tab === 'login' ? 'Entrar' : 'Criar conta grátis')
+              }
+            </button>
+          </form>
         </div>
 
         <p className="text-center text-xs text-slate-500 mt-6">
