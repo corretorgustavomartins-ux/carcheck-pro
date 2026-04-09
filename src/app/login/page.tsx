@@ -37,8 +37,6 @@ export default function LoginPage() {
         return
       }
       if (data.session) {
-        // Aguarda o supabase salvar a sessão no storage antes de redirecionar
-        await new Promise(r => setTimeout(r, 500))
         window.location.replace('/dashboard')
         return
       }
@@ -48,10 +46,7 @@ export default function LoginPage() {
         setLoading(false)
         return
       }
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      })
+      const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) {
         if (error.message.includes('already registered') || error.message.includes('already been registered')) {
           setError('Este email já está cadastrado. Faça login.')
@@ -61,14 +56,10 @@ export default function LoginPage() {
         setLoading(false)
         return
       }
-      // Confirmação desabilitada → sessão criada direto
       if (data.session) {
-        // Aguarda o supabase salvar a sessão no storage antes de redirecionar
-        await new Promise(r => setTimeout(r, 500))
         window.location.replace('/dashboard')
         return
       }
-      // Confirmação ainda ativa → mostrar mensagem
       setSuccess('Verifique seu email para confirmar o cadastro.')
       setLoading(false)
     }

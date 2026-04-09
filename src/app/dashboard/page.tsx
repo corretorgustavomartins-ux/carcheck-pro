@@ -35,28 +35,13 @@ export default function DashboardPage() {
     }
 
     const loadData = async () => {
-      // Pequeno delay para garantir que o storage foi inicializado
-      await new Promise(r => setTimeout(r, 300))
-
       const { data: { session } } = await supabase.auth.getSession()
-
-      // Se não tem sessão, tenta mais uma vez após outro delay
       if (!session) {
-        await new Promise(r => setTimeout(r, 700))
-        const { data: { session: session2 } } = await supabase.auth.getSession()
-        if (!session2) {
-          window.location.href = '/login'
-          return
-        }
-        const user = session2.user
-        setUser(user)
-        await loadUserData(supabase, user)
+        window.location.href = '/login'
         return
       }
-
-      const user = session.user
-      setUser(user)
-      await loadUserData(supabase, user)
+      setUser(session.user)
+      await loadUserData(supabase, session.user)
     }
 
     loadData()
