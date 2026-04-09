@@ -4,36 +4,84 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
+/**
+ * Estrutura de planos:
+ *
+ * SMART = 16 créditos = R$15,90
+ *   → 1 consulta SMART (API Prata ~R$12,90, margem ~R$3,00)
+ *   → SEM histórico de leilão
+ *
+ * RECOMENDADO = 48 créditos = R$35,90
+ *   → 1 consulta COMPLETA com leilão (API Ouro ~R$19,90, margem ~R$16,00)
+ *   OU 3 consultas SMART (3 × R$12,90 = R$38,70 custo API, margem -R$2,80 ← atenção!)
+ *   → Melhor uso: 1 Completo + 1 Smart = R$12,90+R$19,90 = R$32,80 custo, margem R$3,10
+ *
+ * PROFISSIONAL = 100 créditos = R$69,90
+ *   → 2 consultas Completas + 0 Smarts = R$39,80 custo, margem R$30,10
+ *   OU 6 consultas Smart = R$77,40 custo → NÃO USAR assim (prejuízo)
+ *   → Recomendado: máx 2 Completas (96cr) + créditos extras para 0 Smarts
+ */
 const PACKAGES = [
   {
     id: 'starter',
-    name: 'Pacote Inicial',
+    name: 'Consulta SMART',
     price: 'R$ 15,90',
     credits: 16,
     queries: 1,
+    queriesCompleto: 0,
     badge: null,
-    color: '#10b981',
-    features: ['1 consulta SMART completa', 'Score Anti-Bomba', 'Preço Justo IA', 'Relatório PDF', 'Válido por 30 dias'],
+    color: '#3b82f6',
+    features: [
+      '1 consulta SMART completa',
+      'Score Anti-Bomba (0–100)',
+      'Sinistro + Gravame + Restrições',
+      'Roubo e furto',
+      'Preço Justo por IA',
+      'Relatório em PDF',
+    ],
+    obs: '❌ Não inclui histórico de leilão',
   },
   {
     id: 'recommended',
-    name: 'Pacote Recomendado',
+    name: 'Consulta Completa + Leilão',
     price: 'R$ 35,90',
     credits: 48,
-    queries: 3,
-    badge: 'Mais vendido',
-    color: '#3b82f6',
-    features: ['3 consultas SMART completas', 'Score Anti-Bomba', 'Preço Justo IA', 'Relatório PDF', 'Histórico salvo', 'Válido por 60 dias'],
+    queries: 0,
+    queriesCompleto: 1,
+    badge: 'Mais recomendado',
+    color: '#f59e0b',
+    features: [
+      '1 consulta COMPLETA com leilão',
+      'Histórico completo de leilão',
+      'Classificação do leilão (A, B, C, D)',
+      'Score Anti-Bomba (0–100)',
+      'Sinistro + Gravame + Restrições',
+      'Débitos IPVA e multas',
+      'Recall do fabricante',
+      'Preço Justo por IA',
+    ],
+    obs: '✅ Inclui histórico completo de leilão',
   },
   {
     id: 'smart',
-    name: 'Pacote Inteligente',
+    name: 'Pacote Profissional',
     price: 'R$ 69,90',
-    credits: 100,
-    queries: 6,
+    credits: 96,
+    queries: 0,
+    queriesCompleto: 2,
     badge: null,
     color: '#8b5cf6',
-    features: ['6+ consultas SMART completas', 'Score Anti-Bomba', 'Preço Justo IA', 'Relatório PDF', 'Monitoramento de veículo', 'Suporte prioritário', 'Válido por 90 dias'],
+    features: [
+      '2 consultas COMPLETAS com leilão',
+      'Histórico completo de leilão em cada',
+      'Score Anti-Bomba (0–100)',
+      'Sinistro + Gravame + Restrições',
+      'Débitos IPVA e multas',
+      'Recall do fabricante',
+      'Preço Justo por IA',
+      'Histórico salvo no painel',
+    ],
+    obs: '✅ 2 consultas Completas + Leilão',
   },
 ]
 
@@ -129,7 +177,12 @@ function ComprarContent() {
             </p>
             <div style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 14, padding: '14px 20px', marginBottom: 24 }}>
               <p style={{ color: '#34d399', fontWeight: 700 }}>✅ {selectedPackage.credits} créditos</p>
-              <p style={{ color: '#6ee7b7', fontSize: 13 }}>{selectedPackage.queries} consulta{selectedPackage.queries > 1 ? 's' : ''} SMART disponível{selectedPackage.queries > 1 ? 'is' : ''}</p>
+              <p style={{ color: '#6ee7b7', fontSize: 13 }}>
+                {selectedPackage.queriesCompleto > 0
+                  ? `${selectedPackage.queriesCompleto} consulta${selectedPackage.queriesCompleto > 1 ? 's' : ''} Completa${selectedPackage.queriesCompleto > 1 ? 's' : ''} com Leilão disponíve${selectedPackage.queriesCompleto > 1 ? 'is' : 'l'}`
+                  : `${selectedPackage.queries} consulta${selectedPackage.queries > 1 ? 's' : ''} SMART disponível${selectedPackage.queries > 1 ? 'is' : ''}`
+                }
+              </p>
             </div>
             <div style={{ display: 'flex', gap: 12 }}>
               <button onClick={() => window.location.href = '/dashboard'} style={{ flex: 1, background: '#2563eb', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 0', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>
@@ -217,7 +270,9 @@ function ComprarContent() {
                 style={{
                   position: 'relative',
                   textAlign: 'left',
-                  background: isSelected ? `rgba(${pkg.color === '#3b82f6' ? '59,130,246' : pkg.color === '#10b981' ? '16,185,129' : '139,92,246'},0.1)` : 'rgba(255,255,255,0.04)',
+                  background: isSelected
+                    ? `rgba(${pkg.color === '#3b82f6' ? '59,130,246' : pkg.color === '#f59e0b' ? '245,158,11' : '139,92,246'},0.1)`
+                    : 'rgba(255,255,255,0.04)',
                   border: `2px solid ${isSelected ? pkg.color : 'rgba(255,255,255,0.08)'}`,
                   borderRadius: 20,
                   padding: '28px 24px',
@@ -240,9 +295,14 @@ function ComprarContent() {
 
                 <div style={{ color: '#94a3b8', fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{pkg.name}</div>
                 <div style={{ color: '#fff', fontSize: 32, fontWeight: 900, marginBottom: 4 }}>{pkg.price}</div>
-                <div style={{ color: pkg.color, fontWeight: 600, fontSize: 14, marginBottom: 20 }}>
-                  {pkg.credits} créditos • {pkg.queries} consulta{pkg.queries > 1 ? 's' : ''}
+                <div style={{ color: pkg.color, fontWeight: 600, fontSize: 14, marginBottom: 8 }}>
+                  {pkg.credits} créditos
+                  {pkg.queriesCompleto > 0 && <span> • {pkg.queriesCompleto} consulta{pkg.queriesCompleto > 1 ? 's' : ''} Completa{pkg.queriesCompleto > 1 ? 's' : ''} + Leilão</span>}
+                  {pkg.queries > 0 && <span> • {pkg.queries} consulta{pkg.queries > 1 ? 's' : ''} SMART</span>}
                 </div>
+                {pkg.obs && (
+                  <div style={{ color: pkg.id === 'starter' ? '#f87171' : '#34d399', fontSize: 12, marginBottom: 14 }}>{pkg.obs}</div>
+                )}
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {pkg.features.map((f, i) => (
                     <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#94a3b8', fontSize: 13 }}>
@@ -266,7 +326,10 @@ function ComprarContent() {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: '#64748b', fontSize: 14 }}>Consultas incluídas</span>
-                <span style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>{selectedPackage.queries}</span>
+                <span style={{ color: '#fff', fontWeight: 600, fontSize: 14 }}>
+                  {selectedPackage.queriesCompleto > 0 && `${selectedPackage.queriesCompleto} Completa${selectedPackage.queriesCompleto > 1 ? 's' : ''} c/ Leilão`}
+                  {selectedPackage.queries > 0 && `${selectedPackage.queries} SMART`}
+                </span>
               </div>
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 12, display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: '#fff', fontWeight: 700 }}>Total</span>

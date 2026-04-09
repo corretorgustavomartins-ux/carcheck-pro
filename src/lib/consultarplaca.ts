@@ -60,11 +60,24 @@ export interface ConsultarPlacaResult {
   raw_json:        Record<string, unknown>
 }
 
-export type TipoConsulta = 'smart' | 'premium'
+export type TipoConsulta = 'smart' | 'completo' | 'premium'
 
-// Mapeia nosso tipo interno para o plano da ConsultarPlaca API
+/**
+ * Mapeamento dos nossos planos internos para os planos da API ConsultarPlaca:
+ *
+ *  smart    → prata   (dados completos + sinistro/gravame/restrições — SEM leilão)
+ *             Custo API: ~R$12,90 | Preço carcheck: R$15,90 (16 créditos)
+ *
+ *  completo → ouro    (dados completos + sinistro/gravame + HISTÓRICO DE LEILÃO)
+ *             Custo API: ~R$19,90 | Preço carcheck: R$35,90 (48 créditos)
+ *
+ *  premium  → diamante (tudo + fotos + ficha técnica — plano legado/upsell)
+ *             Custo API: ~R$29,90
+ */
 function mapTipo(tipo: TipoConsulta): string {
-  return tipo === 'premium' ? 'diamante' : 'ouro'
+  if (tipo === 'premium') return 'diamante'
+  if (tipo === 'completo') return 'ouro'
+  return 'prata'  // smart → prata (sem leilão)
 }
 
 // ── Passo 1: solicitar relatório ────────────────────────────

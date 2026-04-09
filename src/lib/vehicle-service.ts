@@ -8,6 +8,18 @@
 import { VehicleData, VehiclePreview } from '@/types'
 import { consultarVeiculo, TipoConsulta } from '@/lib/consultarplaca'
 
+/**
+ * Custo em créditos por tipo de consulta:
+ *   smart    = 16 créditos  (API Prata ~R$12,90)  — SEM leilão
+ *   completo = 48 créditos  (API Ouro  ~R$19,90)  — COM leilão
+ *   premium  = legacy / upsell (diamante)
+ */
+export const CREDITOS_POR_PLANO: Record<TipoConsulta, number> = {
+  smart:    16,
+  completo: 48,
+  premium:  48,
+}
+
 // ── Verifica se a API real está configurada ──────────────────
 function isApiConfigured(): boolean {
   return !!(process.env.CONSULTARPLACA_EMAIL && process.env.CONSULTARPLACA_API_KEY)
@@ -99,7 +111,7 @@ export class VehicleService {
     }
   }
 
-  /** Relatório completo — consome 16 créditos (SMART) ou 35 créditos (PREMIUM) */
+  /** Relatório completo — consome créditos conforme CREDITOS_POR_PLANO */
   static async getFullReport(plate: string, tipo: TipoConsulta = 'smart'): Promise<VehicleData | null> {
     const p = plate.toUpperCase().replace(/[^A-Z0-9]/g, '')
 
@@ -107,10 +119,12 @@ export class VehicleService {
       try {
         const r = await consultarVeiculo(p, tipo)
 
-        // Monta restricoes completas incluindo débitos, leilão, roubo
+        // Monta restricoes incluindo débitos, roubo
+        // Leilão só aparece nos planos 'completo' e 'premium'
         const restricoes: string[] = [...r.restricoes]
         if (r.roubo_furto)     restricoes.push('Histórico de roubo/furto')
-        if (r.leilao)          restricoes.push(`Veículo de leilão (Classe ${r.leilao_classificacao})`)
+        if ((tipo === 'completo' || tipo === 'premium') && r.leilao)
+          restricoes.push(`Veículo de leilão (Classe ${r.leilao_classificacao})`)
         if (r.debitos_ipva)    restricoes.push('Débito de IPVA')
         if (r.debitos_multa)   restricoes.push('Débito de multa')
         if (r.recall)          restricoes.push(`Recall: ${r.recall_descricao}`)

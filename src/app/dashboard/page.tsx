@@ -28,13 +28,11 @@ export default function DashboardPage() {
       setLoading(false)
     }
 
-    // Primeiro tenta ler sessão existente do localStorage
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user)
         loadUserData(session.user.id)
       } else {
-        // Sem sessão — redireciona pro login
         window.location.href = '/login'
       }
     })
@@ -57,7 +55,8 @@ export default function DashboardPage() {
       return
     }
     setPlateError('')
-    window.location.href = `/consulta?placa=${clean}`
+    // Vai direto para tela de seleção de consulta
+    window.location.href = `/selecionar-consulta?placa=${clean}`
   }
 
   if (loading) {
@@ -163,53 +162,6 @@ export default function DashboardPage() {
           <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>{user?.email}</p>
         </div>
 
-        {/* Banner CTA — Fazer consulta */}
-        <Link href="/" style={{ textDecoration: 'none' }}>
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(37,99,235,0.25) 0%, rgba(6,182,212,0.15) 100%)',
-            border: '1px solid rgba(59,130,246,0.3)',
-            borderRadius: 20,
-            padding: '20px 28px',
-            marginBottom: 28,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            cursor: 'pointer',
-            transition: 'border-color 0.2s',
-          }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(59,130,246,0.6)')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)')}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{
-                width: 48, height: 48,
-                background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-                borderRadius: 14,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 22,
-                boxShadow: '0 4px 20px rgba(37,99,235,0.4)',
-                flexShrink: 0,
-              }}>🔍</div>
-              <div>
-                <div style={{ color: '#f8fafc', fontWeight: 700, fontSize: 16 }}>Consultar placa de veículo</div>
-                <div style={{ color: '#94a3b8', fontSize: 13, marginTop: 2 }}>Descubra o histórico completo, score e riscos do carro</div>
-              </div>
-            </div>
-            <div style={{
-              background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-              borderRadius: 12,
-              padding: '10px 22px',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: 14,
-              whiteSpace: 'nowrap',
-              boxShadow: '0 4px 16px rgba(37,99,235,0.4)',
-            }}>
-              Consultar agora →
-            </div>
-          </div>
-        </Link>
-
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
           {[
@@ -232,24 +184,27 @@ export default function DashboardPage() {
         </div>
 
         {/* Main grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 24 }}>
 
-          {/* Left: New Query + Quick links */}
+          {/* Left: Nova Consulta */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            {/* New Query Card */}
+            {/* Consulta Card */}
             <div style={{
               background: 'rgba(255,255,255,0.03)',
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: 20,
               padding: 24,
             }}>
-              <h2 style={{ color: '#f8fafc', fontSize: 16, fontWeight: 700, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                🔍 Nova consulta
+              <h2 style={{ color: '#f8fafc', fontSize: 16, fontWeight: 700, margin: '0 0 6px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                🔍 Consultar placa
               </h2>
+              <p style={{ color: '#475569', fontSize: 12, marginBottom: 20 }}>
+                Digite a placa para ver os planos disponíveis
+              </p>
 
               {credits < 16 ? (
-                <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                <div style={{ textAlign: 'center', padding: '12px 0' }}>
                   <div style={{ fontSize: 36, marginBottom: 12 }}>💳</div>
                   <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 6 }}>
                     Você precisa de pelo menos <strong style={{ color: '#f8fafc' }}>16 créditos</strong> para consultar.
@@ -266,32 +221,13 @@ export default function DashboardPage() {
                       fontSize: 14,
                       fontWeight: 700,
                       cursor: 'pointer',
-                      marginBottom: 10,
                     }}>
                       💳 Comprar créditos
-                    </button>
-                  </Link>
-                  <Link href="/#consulta">
-                    <button style={{
-                      width: '100%',
-                      background: 'transparent',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: 12,
-                      padding: '12px 0',
-                      color: '#94a3b8',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}>
-                      🔍 Ir para consulta
                     </button>
                   </Link>
                 </div>
               ) : (
                 <>
-                  <p style={{ color: '#64748b', fontSize: 13, marginBottom: 14 }}>
-                    Digite a placa para consultar. Consome <strong style={{ color: '#94a3b8' }}>16 créditos</strong>.
-                  </p>
                   <input
                     type="text"
                     value={plate}
@@ -304,11 +240,11 @@ export default function DashboardPage() {
                       background: 'rgba(255,255,255,0.05)',
                       border: plateError ? '1px solid rgba(239,68,68,0.5)' : '1px solid rgba(255,255,255,0.1)',
                       borderRadius: 12,
-                      padding: '13px 16px',
+                      padding: '14px 16px',
                       color: '#fff',
-                      fontSize: 18,
+                      fontSize: 22,
                       fontWeight: 700,
-                      letterSpacing: 3,
+                      letterSpacing: 4,
                       textAlign: 'center',
                       outline: 'none',
                       marginBottom: 8,
@@ -326,17 +262,32 @@ export default function DashboardPage() {
                       borderRadius: 12,
                       padding: '14px 0',
                       color: '#fff',
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: 700,
                       cursor: 'pointer',
                       boxShadow: '0 4px 20px rgba(37,99,235,0.35)',
                     }}
                   >
-                    🔓 Consultar — 16 créditos
+                    Ver planos de consulta →
                   </button>
-                  <p style={{ color: '#475569', fontSize: 12, textAlign: 'center', marginTop: 10 }}>
-                    {Math.floor(credits / 16)} consulta{Math.floor(credits / 16) !== 1 ? 's' : ''} disponíveis
-                  </p>
+
+                  {/* Mini preview dos planos */}
+                  <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.12)', borderRadius: 10, padding: '8px 14px' }}>
+                      <div>
+                        <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: 13 }}>SMART</div>
+                        <div style={{ color: '#475569', fontSize: 11 }}>Dados + Score + Sinistro + Gravame</div>
+                      </div>
+                      <div style={{ color: '#3b82f6', fontWeight: 800, fontSize: 14 }}>16 créditos</div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.12)', borderRadius: 10, padding: '8px 14px' }}>
+                      <div>
+                        <div style={{ color: '#fbbf24', fontWeight: 700, fontSize: 13 }}>COMPLETO + LEILÃO</div>
+                        <div style={{ color: '#475569', fontSize: 11 }}>Tudo do SMART + Histórico de Leilão</div>
+                      </div>
+                      <div style={{ color: '#f59e0b', fontWeight: 800, fontSize: 14 }}>48 créditos</div>
+                    </div>
+                  </div>
                 </>
               )}
             </div>

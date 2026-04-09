@@ -56,8 +56,9 @@ function LoadingScreen({ message, submessage }: { message: string; submessage?: 
 function ConsultaContent() {
   const searchParams = useSearchParams()
   const plate = searchParams.get('placa') || ''
-  const tipo = searchParams.get('tipo') === 'premium' ? 'premium' : 'smart'
-  const credits_needed = tipo === 'premium' ? 35 : 16
+  const tipoRaw = searchParams.get('tipo') || 'smart'
+  const tipo = tipoRaw === 'premium' ? 'premium' : tipoRaw === 'completo' ? 'completo' : 'smart'
+  const credits_needed = tipo === 'completo' || tipo === 'premium' ? 48 : 16
 
   const [step, setStep] = useState<'loading' | 'confirm' | 'processing' | 'report' | 'error'>('loading')
   const [credits, setCredits] = useState(0)
@@ -89,6 +90,7 @@ function ConsultaContent() {
     const supabase = createClient()
     try {
       const vehicleData = await VehicleService.getFullReport(plate, tipo as any)
+      // tipo 'completo' usa a mesma API que 'premium' mas com plano Ouro
       if (!vehicleData) throw new Error('Veículo não encontrado')
       setVehicle(vehicleData)
       const scoreResult = calculateScore(vehicleData)
@@ -136,25 +138,32 @@ function ConsultaContent() {
     <div style={{ ...S.page, ...S.center }}>
       <div style={{ ...S.card, maxWidth: 460, width: '100%', margin: '0 20px' }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 48, marginBottom: 12 }}>{tipo === 'premium' ? '💎' : '🔍'}</div>
-          <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 6 }}>Confirmar consulta {tipo.toUpperCase()}</h2>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>{tipo === 'completo' ? '🏆' : tipo === 'premium' ? '💎' : '🔍'}</div>
+          <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 6 }}>Confirmar consulta {tipo === 'completo' ? 'COMPLETO + LEILÃO' : tipo.toUpperCase()}</h2>
           <p style={{ color: '#94a3b8', fontSize: 14 }}>Placa: <strong style={{ color: '#f8fafc' }}>{plate}</strong></p>
         </div>
 
-        <div style={{ background: tipo === 'premium' ? 'rgba(167,139,250,0.08)' : 'rgba(59,130,246,0.08)', border: `1px solid ${tipo === 'premium' ? 'rgba(167,139,250,0.2)' : 'rgba(59,130,246,0.2)'}`, borderRadius: 14, padding: 18, marginBottom: 20 }}>
+        <div style={{ background: tipo === 'completo' ? 'rgba(245,158,11,0.08)' : tipo === 'premium' ? 'rgba(167,139,250,0.08)' : 'rgba(59,130,246,0.08)', border: `1px solid ${tipo === 'completo' ? 'rgba(245,158,11,0.2)' : tipo === 'premium' ? 'rgba(167,139,250,0.2)' : 'rgba(59,130,246,0.2)'}`, borderRadius: 14, padding: 18, marginBottom: 20 }}>
           <p style={{ color: '#94a3b8', fontSize: 12, fontWeight: 600, marginBottom: 10 }}>O que você receberá:</p>
           {(tipo === 'smart' ? [
             '✅ Dados completos do veículo',
             '🏆 Score Anti-Bomba (0–100)',
-            '🚨 Verificação de sinistro',
-            '🔒 Verificação de gravame',
+            '🚨 Verificação de sinistro (perda total)',
+            '🔒 Verificação de gravame (financiamento)',
+            '🚫 Restrições administrativas e judiciais',
             '💰 Preço Justo IA',
-          ] : [
+          ] : tipo === 'completo' ? [
             '✅ Tudo do plano SMART',
             '🏷️ Histórico completo de leilão',
+            '📊 Classificação do leilão (A, B, C, D)',
+            '📌 Débitos IPVA e multas',
             '🔔 Recall do fabricante',
+          ] : [
+            '✅ Tudo do plano COMPLETO',
+            '📸 Fotos oficiais do veículo',
             '📋 Ficha técnica completa',
             '📌 Débitos IPVA e multas',
+            '🔔 Recall do fabricante',
           ]).map((item, i) => (
             <p key={i} style={{ color: '#cbd5e1', fontSize: 13, marginBottom: 4 }}>{item}</p>
           ))}
@@ -162,14 +171,14 @@ function ConsultaContent() {
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: '12px 16px', marginBottom: 8 }}>
           <span style={{ color: '#94a3b8', fontSize: 14 }}>Custo</span>
-          <span style={{ color: tipo === 'premium' ? '#a78bfa' : '#60a5fa', fontWeight: 800, fontSize: 18 }}>{credits_needed} créditos</span>
+          <span style={{ color: tipo === 'completo' ? '#f59e0b' : tipo === 'premium' ? '#a78bfa' : '#60a5fa', fontWeight: 800, fontSize: 18 }}>{credits_needed} créditos</span>
         </div>
         <p style={{ color: '#475569', fontSize: 12, textAlign: 'center', marginBottom: 20 }}>
           Saldo atual: {credits} → Após: {credits - credits_needed} créditos
         </p>
 
-        <button onClick={handleConfirm} style={{ width: '100%', background: tipo === 'premium' ? 'linear-gradient(135deg,#7c3aed,#6d28d9)' : 'linear-gradient(135deg,#3b82f6,#1d4ed8)', border: 'none', borderRadius: 14, padding: '15px 0', color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', boxShadow: '0 4px 20px rgba(37,99,235,0.35)', marginBottom: 12 }}>
-          {tipo === 'premium' ? '💎' : '🔍'} Confirmar — {credits_needed} créditos
+        <button onClick={handleConfirm} style={{ width: '100%', background: tipo === 'completo' ? 'linear-gradient(135deg,#d97706,#b45309)' : tipo === 'premium' ? 'linear-gradient(135deg,#7c3aed,#6d28d9)' : 'linear-gradient(135deg,#3b82f6,#1d4ed8)', border: 'none', borderRadius: 14, padding: '15px 0', color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', boxShadow: '0 4px 20px rgba(37,99,235,0.35)', marginBottom: 12 }}>
+          {tipo === 'completo' ? '🏆' : tipo === 'premium' ? '💎' : '🔍'} Confirmar — {credits_needed} créditos
         </button>
 
         <Link href="/dashboard">
@@ -313,14 +322,14 @@ function ConsultaContent() {
 
           {/* Upsell Premium */}
           {tipo === 'smart' && (
-            <div style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.25)', borderRadius: 20, padding: 24, marginBottom: 24, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-              <span style={{ fontSize: 32 }}>💎</span>
+            <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: 20, padding: 24, marginBottom: 24, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 32 }}>🏆</span>
               <div>
-                <h3 style={{ fontWeight: 800, fontSize: 15, marginBottom: 6 }}>Quer ainda mais informações?</h3>
-                <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 14 }}>O relatório PREMIUM inclui recall, fotos oficiais, ficha técnica e débitos.</p>
-                <Link href={`/consulta?placa=${plate}&tipo=premium`}>
-                  <button style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', border: 'none', borderRadius: 10, padding: '10px 20px', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-                    Consultar Premium — 35 créditos
+                <h3 style={{ fontWeight: 800, fontSize: 15, marginBottom: 6 }}>Precisa do histórico de leilão?</h3>
+                <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 14 }}>O plano COMPLETO inclui histórico de leilão, classificação, débitos e recall.</p>
+                <Link href={`/consulta?placa=${plate}&tipo=completo`}>
+                  <button style={{ background: 'linear-gradient(135deg,#d97706,#b45309)', border: 'none', borderRadius: 10, padding: '10px 20px', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                    Consultar Completo + Leilão — 48 créditos
                   </button>
                 </Link>
               </div>
