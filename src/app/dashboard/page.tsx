@@ -1,24 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Card'
-import { PlateInput } from '@/components/ui/PlateInput'
-import { VehicleService } from '@/lib/vehicle-service'
-import { VehicleReport } from '@/types'
-import { formatDate, formatCurrency, formatPlate, getRiskColor } from '@/lib/utils'
 import Link from 'next/link'
-import toast from 'react-hot-toast'
 
 export default function DashboardPage() {
-  const router = useRouter()
   const [user, setUser] = useState<any>(null)
-  const [profile, setProfile] = useState<any>(null)
   const [credits, setCredits] = useState<number>(0)
-  const [reports, setReports] = useState<VehicleReport[]>([])
+  const [reports, setReports] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [plate, setPlate] = useState('')
   const [plateError, setPlateError] = useState('')
@@ -29,18 +18,10 @@ export default function DashboardPage() {
     const loadData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
-        router.push('/login')
+        window.location.href = '/login'
         return
       }
       setUser(user)
-
-      // Load profile
-      const { data: prof } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-      setProfile(prof)
 
       // Load credits
       const { data: wallet } = await supabase
@@ -65,251 +46,360 @@ export default function DashboardPage() {
     loadData()
   }, [])
 
-  const handleNewQuery = () => {
-    const clean = plate.replace(/[^A-Z0-9]/g, '')
-    if (!VehicleService.validatePlate(clean)) {
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    window.location.href = '/login'
+  }
+
+  const handleSearch = () => {
+    const clean = plate.toUpperCase().replace(/[^A-Z0-9]/g, '')
+    if (clean.length < 7) {
       setPlateError('Digite uma placa válida. Ex: ABC1D23')
       return
     }
     if (credits < 16) {
-      toast.error('Créditos insuficientes! Compre créditos para consultar.')
-      router.push('/comprar')
+      window.location.href = '/comprar'
       return
     }
     setPlateError('')
-    router.push(`/consulta?placa=${clean}`)
+    window.location.href = `/consulta?placa=${clean}`
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 pt-20 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-slate-500 text-sm">Carregando dashboard...</p>
+      <div style={{
+        minHeight: '100vh',
+        background: '#030712',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: 44,
+            height: 44,
+            border: '4px solid rgba(59,130,246,0.2)',
+            borderTop: '4px solid #3b82f6',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+            margin: '0 auto 16px',
+          }} />
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          <p style={{ color: '#94a3b8', fontSize: 14 }}>Carregando dashboard...</p>
         </div>
       </div>
     )
   }
 
+  const safeCount = reports.filter(r => r.risk_level === 'safe').length
+  const alertCount = reports.filter(r => r.risk_level !== 'safe').length
+  const userName = user?.email?.split('@')[0] || 'usuário'
+
   return (
-    <div className="min-h-screen bg-slate-50 pt-20">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div style={{
+      minHeight: '100vh',
+      background: '#030712',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      paddingTop: 72,
+    }}>
+      {/* Top bar */}
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+        background: 'rgba(3,7,18,0.95)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        padding: '0 24px',
+        height: 64,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <div style={{
+            width: 36, height: 36,
+            background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+            borderRadius: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 16px rgba(59,130,246,0.3)',
+          }}>
+            <span style={{ color: '#fff', fontWeight: 900, fontSize: 16 }}>C</span>
+          </div>
+          <span style={{ color: '#fff', fontWeight: 800, fontSize: 18 }}>Carcheck Pro</span>
+        </Link>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            background: 'rgba(59,130,246,0.1)',
+            border: '1px solid rgba(59,130,246,0.2)',
+            borderRadius: 10,
+            padding: '6px 14px',
+            textAlign: 'center',
+          }}>
+            <span style={{ color: '#60a5fa', fontWeight: 700, fontSize: 15 }}>{credits}</span>
+            <span style={{ color: '#475569', fontSize: 12, marginLeft: 4 }}>créditos</span>
+          </div>
+          <button
+            onClick={handleLogout}
+            style={{
+              background: 'rgba(239,68,68,0.08)',
+              border: '1px solid rgba(239,68,68,0.2)',
+              borderRadius: 10,
+              padding: '7px 16px',
+              color: '#f87171',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Sair
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
+
         {/* Welcome */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-black text-slate-900">
-              Olá, {profile?.nome?.split(' ')[0] || 'usuário'} 👋
-            </h1>
-            <p className="text-slate-500 text-sm mt-1">{profile?.email}</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-2.5 text-center">
-              <div className="text-2xl font-black text-blue-700">{credits}</div>
-              <div className="text-xs text-blue-500 font-medium">créditos</div>
+        <div style={{ marginBottom: 32 }}>
+          <h1 style={{ color: '#f8fafc', fontSize: 26, fontWeight: 800, margin: 0 }}>
+            Olá, {userName} 👋
+          </h1>
+          <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>{user?.email}</p>
+        </div>
+
+        {/* Stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
+          {[
+            { icon: '💳', value: credits, label: 'Créditos disponíveis', color: '#3b82f6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.15)' },
+            { icon: '🔍', value: reports.length, label: 'Consultas realizadas', color: '#a78bfa', bg: 'rgba(167,139,250,0.08)', border: 'rgba(167,139,250,0.15)' },
+            { icon: '✅', value: safeCount, label: 'Compras seguras', color: '#34d399', bg: 'rgba(52,211,153,0.08)', border: 'rgba(52,211,153,0.15)' },
+            { icon: '⚠️', value: alertCount, label: 'Alertas detectados', color: '#fb923c', bg: 'rgba(251,146,60,0.08)', border: 'rgba(251,146,60,0.15)' },
+          ].map((s, i) => (
+            <div key={i} style={{
+              background: s.bg,
+              border: `1px solid ${s.border}`,
+              borderRadius: 16,
+              padding: '20px 22px',
+            }}>
+              <div style={{ fontSize: 24, marginBottom: 8 }}>{s.icon}</div>
+              <div style={{ color: s.color, fontSize: 28, fontWeight: 800 }}>{s.value}</div>
+              <div style={{ color: '#64748b', fontSize: 12, marginTop: 2 }}>{s.label}</div>
             </div>
-            <Link href="/comprar">
-              <Button size="sm">+ Comprar créditos</Button>
-            </Link>
-          </div>
+          ))}
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            icon="💳"
-            value={String(credits)}
-            label="Créditos disponíveis"
-            color="blue"
-          />
-          <StatCard
-            icon="🔍"
-            value={String(reports.length)}
-            label="Consultas realizadas"
-            color="purple"
-          />
-          <StatCard
-            icon="✅"
-            value={String(reports.filter(r => r.risk_level === 'safe').length)}
-            label="Compras seguras"
-            color="green"
-          />
-          <StatCard
-            icon="⚠️"
-            value={String(reports.filter(r => r.risk_level !== 'safe').length)}
-            label="Alertas detectados"
-            color="amber"
-          />
-        </div>
+        {/* Main grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 24 }}>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* New Query */}
-          <div className="lg:col-span-1">
-            <Card shadow="md">
-              <h2 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-                <span className="text-xl">🔍</span> Nova consulta
+          {/* Left: New Query + Quick links */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+            {/* New Query Card */}
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 20,
+              padding: 24,
+            }}>
+              <h2 style={{ color: '#f8fafc', fontSize: 16, fontWeight: 700, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                🔍 Nova consulta
               </h2>
 
               {credits < 16 ? (
-                <div className="text-center py-4">
-                  <div className="text-4xl mb-3">💳</div>
-                  <p className="text-slate-600 text-sm mb-4">
-                    Você precisa de pelo menos <strong>16 créditos</strong> para fazer uma consulta SMART.
+                <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                  <div style={{ fontSize: 36, marginBottom: 12 }}>💳</div>
+                  <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 6 }}>
+                    Você precisa de pelo menos <strong style={{ color: '#f8fafc' }}>16 créditos</strong> para consultar.
                   </p>
-                  <p className="text-slate-400 text-xs mb-4">Créditos atuais: {credits}</p>
+                  <p style={{ color: '#475569', fontSize: 12, marginBottom: 16 }}>Créditos atuais: {credits}</p>
                   <Link href="/comprar">
-                    <Button fullWidth>Comprar créditos</Button>
+                    <button style={{
+                      width: '100%',
+                      background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                      border: 'none',
+                      borderRadius: 12,
+                      padding: '13px 0',
+                      color: '#fff',
+                      fontSize: 14,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}>
+                      Comprar créditos
+                    </button>
                   </Link>
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-slate-500 mb-4">
-                    Digite a placa para consultar. Consome <strong>16 créditos</strong>.
+                  <p style={{ color: '#64748b', fontSize: 13, marginBottom: 14 }}>
+                    Digite a placa para consultar. Consome <strong style={{ color: '#94a3b8' }}>16 créditos</strong>.
                   </p>
-                  <div className="space-y-3">
-                    <PlateInput
-                      value={plate}
-                      onChange={setPlate}
-                      onSearch={handleNewQuery}
-                      error={plateError}
-                      size="md"
-                    />
-                    <Button onClick={handleNewQuery} fullWidth size="lg">
-                      🔓 Consultar — 16 créditos
-                    </Button>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-3 text-center">
-                    Restam {Math.floor(credits / 16)} consulta{Math.floor(credits / 16) !== 1 ? 's' : ''} com seus créditos
+                  <input
+                    type="text"
+                    value={plate}
+                    onChange={e => { setPlate(e.target.value.toUpperCase()); setPlateError('') }}
+                    onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                    placeholder="Ex: ABC1D23"
+                    maxLength={8}
+                    style={{
+                      width: '100%', boxSizing: 'border-box',
+                      background: 'rgba(255,255,255,0.05)',
+                      border: plateError ? '1px solid rgba(239,68,68,0.5)' : '1px solid rgba(255,255,255,0.1)',
+                      borderRadius: 12,
+                      padding: '13px 16px',
+                      color: '#fff',
+                      fontSize: 18,
+                      fontWeight: 700,
+                      letterSpacing: 3,
+                      textAlign: 'center',
+                      outline: 'none',
+                      marginBottom: 8,
+                    }}
+                  />
+                  {plateError && (
+                    <p style={{ color: '#f87171', fontSize: 12, marginBottom: 8 }}>⚠️ {plateError}</p>
+                  )}
+                  <button
+                    onClick={handleSearch}
+                    style={{
+                      width: '100%',
+                      background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                      border: 'none',
+                      borderRadius: 12,
+                      padding: '14px 0',
+                      color: '#fff',
+                      fontSize: 14,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 20px rgba(37,99,235,0.35)',
+                    }}
+                  >
+                    🔓 Consultar — 16 créditos
+                  </button>
+                  <p style={{ color: '#475569', fontSize: 12, textAlign: 'center', marginTop: 10 }}>
+                    {Math.floor(credits / 16)} consulta{Math.floor(credits / 16) !== 1 ? 's' : ''} disponíveis
                   </p>
                 </>
               )}
-            </Card>
+            </div>
 
             {/* Quick Links */}
-            <Card className="mt-4" shadow="sm">
-              <h3 className="font-semibold text-slate-700 text-sm mb-3">Acesso rápido</h3>
-              <div className="space-y-1">
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 20,
+              padding: 20,
+            }}>
+              <h3 style={{ color: '#94a3b8', fontSize: 13, fontWeight: 600, marginBottom: 12 }}>Acesso rápido</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {[
                   { href: '/comprar', icon: '💳', label: 'Comprar créditos' },
                   { href: '/dashboard/transacoes', icon: '📋', label: 'Histórico de compras' },
                   { href: '/dashboard/perfil', icon: '👤', label: 'Meu perfil' },
-                ].map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 transition-colors text-sm text-slate-700"
+                ].map(link => (
+                  <Link key={link.href} href={link.href} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '10px 12px',
+                    borderRadius: 12,
+                    color: '#cbd5e1',
+                    fontSize: 14,
+                    textDecoration: 'none',
+                    transition: 'background 0.15s',
+                  }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <span>{link.icon}</span>
                     <span>{link.label}</span>
-                    <svg className="w-4 h-4 text-slate-400 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+                    <span style={{ marginLeft: 'auto', color: '#475569', fontSize: 16 }}>›</span>
                   </Link>
                 ))}
               </div>
-            </Card>
+            </div>
           </div>
 
-          {/* Recent Reports */}
-          <div className="lg:col-span-2">
-            <Card shadow="md">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-bold text-slate-900 flex items-center gap-2">
-                  <span className="text-xl">📋</span> Histórico de consultas
-                </h2>
-                <span className="text-xs text-slate-400">{reports.length} consulta{reports.length !== 1 ? 's' : ''}</span>
+          {/* Right: Recent Reports */}
+          <div style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 20,
+            padding: 24,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h2 style={{ color: '#f8fafc', fontSize: 16, fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                📋 Histórico de consultas
+              </h2>
+              <span style={{ color: '#475569', fontSize: 13 }}>{reports.length} consulta{reports.length !== 1 ? 's' : ''}</span>
+            </div>
+
+            {reports.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🚗</div>
+                <p style={{ color: '#64748b', fontSize: 14 }}>Nenhuma consulta realizada ainda.</p>
+                <p style={{ color: '#475569', fontSize: 13, marginTop: 6 }}>Faça sua primeira consulta de placa!</p>
               </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {reports.map(report => {
+                  const riskColor = report.risk_level === 'safe' ? '#34d399' : report.risk_level === 'attention' ? '#fb923c' : '#f87171'
+                  const riskBg = report.risk_level === 'safe' ? 'rgba(52,211,153,0.1)' : report.risk_level === 'attention' ? 'rgba(251,146,60,0.1)' : 'rgba(248,113,113,0.1)'
+                  const riskLabel = report.risk_level === 'safe' ? '✅ Seguro' : report.risk_level === 'attention' ? '⚠️ Atenção' : '🚨 Risco'
+                  const vehicle = report.api_payload_json as any
+                  const date = new Date(report.created_at).toLocaleDateString('pt-BR')
 
-              {reports.length === 0 ? (
-                <div className="text-center py-10">
-                  <div className="text-4xl mb-3">🚗</div>
-                  <p className="text-slate-500 text-sm">Nenhuma consulta realizada ainda.</p>
-                  <p className="text-slate-400 text-xs mt-1">Faça sua primeira consulta de placa!</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {reports.map((report) => (
-                    <ReportCard key={report.id} report={report} />
-                  ))}
-                </div>
-              )}
-            </Card>
+                  return (
+                    <div key={report.id} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 14,
+                      padding: '14px 16px',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                        <div style={{
+                          width: 42, height: 42,
+                          background: 'rgba(255,255,255,0.06)',
+                          borderRadius: 12,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: '#94a3b8', fontWeight: 700, fontSize: 11,
+                        }}>
+                          {report.plate?.slice(0, 3)}
+                        </div>
+                        <div>
+                          <div style={{ color: '#f8fafc', fontWeight: 600, fontSize: 14 }}>
+                            {vehicle?.marca || ''} {vehicle?.modelo || ''} {vehicle?.ano || ''}
+                          </div>
+                          <div style={{ color: '#64748b', fontSize: 12, marginTop: 2 }}>
+                            📍 {report.plate} &nbsp;•&nbsp; 🕐 {date}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ color: '#f8fafc', fontWeight: 800, fontSize: 18 }}>{report.score}</div>
+                          <div style={{ color: '#475569', fontSize: 11 }}>Score</div>
+                        </div>
+                        <span style={{
+                          background: riskBg,
+                          color: riskColor,
+                          border: `1px solid ${riskColor}33`,
+                          borderRadius: 999,
+                          padding: '4px 12px',
+                          fontSize: 12,
+                          fontWeight: 600,
+                        }}>
+                          {riskLabel}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    </div>
-  )
-}
-
-function StatCard({ icon, value, label, color }: { icon: string, value: string, label: string, color: string }) {
-  const colorMap = {
-    blue: 'bg-blue-50 border-blue-100',
-    purple: 'bg-purple-50 border-purple-100',
-    green: 'bg-emerald-50 border-emerald-100',
-    amber: 'bg-amber-50 border-amber-100',
-  }
-  const textMap = {
-    blue: 'text-blue-700',
-    purple: 'text-purple-700',
-    green: 'text-emerald-700',
-    amber: 'text-amber-700',
-  }
-
-  return (
-    <div className={`rounded-2xl border p-4 ${colorMap[color as keyof typeof colorMap]}`}>
-      <div className="text-2xl mb-2">{icon}</div>
-      <div className={`text-2xl font-black ${textMap[color as keyof typeof textMap]}`}>{value}</div>
-      <div className="text-xs text-slate-500 mt-1">{label}</div>
-    </div>
-  )
-}
-
-function ReportCard({ report }: { report: VehicleReport }) {
-  const riskColors = {
-    safe: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-    attention: 'bg-amber-50 border-amber-200 text-amber-700',
-    danger: 'bg-red-50 border-red-200 text-red-700',
-  }
-  const riskLabels = {
-    safe: '✅ Seguro',
-    attention: '⚠️ Atenção',
-    danger: '🚨 Risco',
-  }
-
-  const vehicle = report.api_payload_json as any
-
-  return (
-    <div className="flex items-center justify-between p-4 bg-slate-50 hover:bg-white border border-slate-100 hover:border-slate-200 rounded-xl transition-all group">
-      <div className="flex items-center gap-4">
-        <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center font-bold text-slate-600 text-xs">
-          {formatPlate(report.plate).slice(0, 3)}
-        </div>
-        <div>
-          <div className="font-semibold text-slate-800 text-sm">
-            {vehicle?.marca} {vehicle?.modelo} {vehicle?.ano}
-          </div>
-          <div className="text-xs text-slate-500 flex items-center gap-2 mt-0.5">
-            <span>📍 {formatPlate(report.plate)}</span>
-            <span>•</span>
-            <span>🕐 {formatDate(report.created_at)}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div className="text-right hidden sm:block">
-          <div className="text-lg font-black text-slate-900">{report.score}</div>
-          <div className="text-xs text-slate-400">Score</div>
-        </div>
-        <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${riskColors[report.risk_level]}`}>
-          {riskLabels[report.risk_level]}
-        </span>
-        <Link href={`/consulta/${report.id}`}>
-          <button className="text-slate-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </Link>
       </div>
     </div>
   )

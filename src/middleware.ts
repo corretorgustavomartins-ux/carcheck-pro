@@ -4,7 +4,6 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
-  // Se as variáveis de ambiente não estiverem configuradas, permite o acesso
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
@@ -41,18 +40,12 @@ export async function middleware(request: NextRequest) {
     if (isProtected && !user) {
       const redirectUrl = request.nextUrl.clone()
       redirectUrl.pathname = '/login'
-      redirectUrl.searchParams.set('next', request.nextUrl.pathname + request.nextUrl.search)
       return NextResponse.redirect(redirectUrl)
     }
 
-    // Redirect logged users away from login
-    if (request.nextUrl.pathname === '/login' && user) {
-      const redirectUrl = request.nextUrl.clone()
-      redirectUrl.pathname = '/dashboard'
-      return NextResponse.redirect(redirectUrl)
-    }
+    // REMOVIDO: redirect de /login -> /dashboard para evitar loop
+    // O redirect é feito pelo cliente (window.location.href) após login bem-sucedido
   } catch (error) {
-    // Em caso de erro no Supabase, não bloquear o acesso
     console.error('Middleware Supabase error:', error)
   }
 
