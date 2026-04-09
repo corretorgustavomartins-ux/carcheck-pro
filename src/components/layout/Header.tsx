@@ -12,17 +12,32 @@ export function Header() {
 
   useEffect(() => {
     const supabase = createClient()
-    const load = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      if (user) {
-        const { data } = await supabase
-          .from('credit_wallets').select('balance').eq('user_id', user.id).single()
-        setCredits(data?.balance ?? 0)
-      }
+
+    const loadCredits = async (uid: string) => {
+      const { data } = await supabase
+        .from('credit_wallets').select('balance').eq('user_id', uid).single()
+      setCredits(data?.balance ?? 0)
     }
-    load()
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => load())
+
+    // Usa getSession() — lê do localStorage sem chamada de rede
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user)
+        loadCredits(session.user.id)
+      }
+    })
+
+    // Escuta mudanças de auth sem fazer chamadas extras
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setUser(session.user)
+        loadCredits(session.user.id)
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null)
+        setCredits(null)
+      }
+    })
+
     const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll)
     setScrolled(window.scrollY > 20)

@@ -15,36 +15,29 @@ export default function DashboardPage() {
   useEffect(() => {
     const supabase = createClient()
 
-    const loadUserData = async (sb: any, user: any) => {
-      const { data: wallet } = await sb
-        .from('credit_wallets')
-        .select('balance')
-        .eq('user_id', user.id)
-        .single()
+    const loadUserData = async (uid: string) => {
+      const { data: wallet } = await supabase
+        .from('credit_wallets').select('balance').eq('user_id', uid).single()
       setCredits(wallet?.balance ?? 0)
 
-      const { data: reps } = await sb
-        .from('vehicle_reports')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(10)
+      const { data: reps } = await supabase
+        .from('vehicle_reports').select('*').eq('user_id', uid)
+        .order('created_at', { ascending: false }).limit(10)
       setReports(reps || [])
 
       setLoading(false)
     }
 
-    const loadData = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
+    // Primeiro tenta ler sessão existente do localStorage
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user)
+        loadUserData(session.user.id)
+      } else {
+        // Sem sessão — redireciona pro login
         window.location.href = '/login'
-        return
       }
-      setUser(session.user)
-      await loadUserData(supabase, session.user)
-    }
-
-    loadData()
+    })
   }, [])
 
   const handleLogout = async () => {
