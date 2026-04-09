@@ -10,14 +10,22 @@ import { consultarVeiculo, TipoConsulta } from '@/lib/consultarplaca'
 
 /**
  * Custo em créditos por tipo de consulta:
- *   smart    = 16 créditos  (API Prata ~R$12,90)  — SEM leilão
- *   completo = 48 créditos  (API Ouro  ~R$19,90)  — COM leilão
- *   premium  = legacy / upsell (diamante)
+ *
+ *   smart    = 26 créditos  (R$25,99)
+ *     Serviços: Dados básicos + Sinistro + Roubo/Furto + Gravame + FIPE + Débitos
+ *     SEM Renavam, SEM Leilão
+ *     Custo API estimado: ~R$21,80
+ *
+ *   completo = 49 créditos  (R$48,90)
+ *     Serviços: Tudo do SMART + Leilão Prime (com classificação)
+ *     Custo API estimado: ~R$38,70
+ *
+ *   premium  = legado/upsell
  */
 export const CREDITOS_POR_PLANO: Record<TipoConsulta, number> = {
-  smart:    16,
-  completo: 48,
-  premium:  48,
+  smart:    26,
+  completo: 49,
+  premium:  49,
 }
 
 // ── Verifica se a API real está configurada ──────────────────
@@ -111,7 +119,11 @@ export class VehicleService {
     }
   }
 
-  /** Relatório completo — consome créditos conforme CREDITOS_POR_PLANO */
+  /**
+   * Relatório completo — consome créditos conforme CREDITOS_POR_PLANO
+   * SMART (26cr): sem Renavam, sem Leilão
+   * COMPLETO (49cr): sem Renavam, com Leilão
+   */
   static async getFullReport(plate: string, tipo: TipoConsulta = 'smart'): Promise<VehicleData | null> {
     const p = plate.toUpperCase().replace(/[^A-Z0-9]/g, '')
 

@@ -50,7 +50,7 @@ export default function DashboardPage() {
       setPlateError('Digite uma placa válida. Ex: ABC1D23')
       return
     }
-    if (credits < 16) {
+    if (credits < 26) {
       window.location.href = '/comprar'
       return
     }
@@ -203,11 +203,11 @@ export default function DashboardPage() {
                 Digite a placa para ver os planos disponíveis
               </p>
 
-              {credits < 16 ? (
+              {credits < 26 ? (
                 <div style={{ textAlign: 'center', padding: '12px 0' }}>
                   <div style={{ fontSize: 36, marginBottom: 12 }}>💳</div>
                   <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 6 }}>
-                    Você precisa de pelo menos <strong style={{ color: '#f8fafc' }}>16 créditos</strong> para consultar.
+                    Você precisa de pelo menos <strong style={{ color: '#f8fafc' }}>26 créditos</strong> para consultar.
                   </p>
                   <p style={{ color: '#475569', fontSize: 12, marginBottom: 16 }}>Créditos atuais: {credits}</p>
                   <Link href="/comprar">
@@ -278,14 +278,14 @@ export default function DashboardPage() {
                         <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: 13 }}>SMART</div>
                         <div style={{ color: '#475569', fontSize: 11 }}>Dados + Score + Sinistro + Gravame</div>
                       </div>
-                      <div style={{ color: '#3b82f6', fontWeight: 800, fontSize: 14 }}>16 créditos</div>
+                      <div style={{ color: '#3b82f6', fontWeight: 800, fontSize: 14 }}>26 créditos</div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.12)', borderRadius: 10, padding: '8px 14px' }}>
                       <div>
                         <div style={{ color: '#fbbf24', fontWeight: 700, fontSize: 13 }}>COMPLETO + LEILÃO</div>
                         <div style={{ color: '#475569', fontSize: 11 }}>Tudo do SMART + Histórico de Leilão</div>
                       </div>
-                      <div style={{ color: '#f59e0b', fontWeight: 800, fontSize: 14 }}>48 créditos</div>
+                      <div style={{ color: '#f59e0b', fontWeight: 800, fontSize: 14 }}>49 créditos</div>
                     </div>
                   </div>
                 </>

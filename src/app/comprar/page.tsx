@@ -5,28 +5,26 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 /**
- * Estrutura de planos:
+ * Estrutura de planos — atualizado:
  *
- * SMART = 16 créditos = R$15,90
- *   → 1 consulta SMART (API Prata ~R$12,90, margem ~R$3,00)
- *   → SEM histórico de leilão
+ * SMART = 26 créditos = R$25,99
+ *   → 1 consulta SMART (sem Renavam, sem Leilão)
+ *   → Custo API estimado: ~R$21,80 | Margem: ~R$4,19
  *
- * RECOMENDADO = 48 créditos = R$35,90
- *   → 1 consulta COMPLETA com leilão (API Ouro ~R$19,90, margem ~R$16,00)
- *   OU 3 consultas SMART (3 × R$12,90 = R$38,70 custo API, margem -R$2,80 ← atenção!)
- *   → Melhor uso: 1 Completo + 1 Smart = R$12,90+R$19,90 = R$32,80 custo, margem R$3,10
+ * RECOMENDADO = 49 créditos = R$48,90
+ *   → 1 consulta COMPLETA com Leilão (sem Renavam)
+ *   → Custo API estimado: ~R$38,70 | Margem: ~R$10,20
  *
- * PROFISSIONAL = 100 créditos = R$69,90
- *   → 2 consultas Completas + 0 Smarts = R$39,80 custo, margem R$30,10
- *   OU 6 consultas Smart = R$77,40 custo → NÃO USAR assim (prejuízo)
- *   → Recomendado: máx 2 Completas (96cr) + créditos extras para 0 Smarts
+ * PROFISSIONAL = 98 créditos = R$89,90
+ *   → 2 consultas COMPLETAS com Leilão
+ *   → Custo API estimado: ~R$77,40 | Margem: ~R$12,50
  */
 const PACKAGES = [
   {
     id: 'starter',
     name: 'Consulta SMART',
-    price: 'R$ 15,90',
-    credits: 16,
+    price: 'R$ 25,99',
+    credits: 26,
     queries: 1,
     queriesCompleto: 0,
     badge: null,
@@ -35,17 +33,17 @@ const PACKAGES = [
       '1 consulta SMART completa',
       'Score Anti-Bomba (0–100)',
       'Sinistro + Gravame + Restrições',
-      'Roubo e furto',
+      'Histórico de roubo e furto',
       'Preço Justo por IA',
       'Relatório em PDF',
     ],
-    obs: '❌ Não inclui histórico de leilão',
+    obs: '❌ Não inclui leilão nem Renavam',
   },
   {
     id: 'recommended',
     name: 'Consulta Completa + Leilão',
-    price: 'R$ 35,90',
-    credits: 48,
+    price: 'R$ 48,90',
+    credits: 49,
     queries: 0,
     queriesCompleto: 1,
     badge: 'Mais recomendado',
@@ -65,8 +63,8 @@ const PACKAGES = [
   {
     id: 'smart',
     name: 'Pacote Profissional',
-    price: 'R$ 69,90',
-    credits: 96,
+    price: 'R$ 89,90',
+    credits: 98,
     queries: 0,
     queriesCompleto: 2,
     badge: null,

@@ -58,7 +58,7 @@ function ConsultaContent() {
   const plate = searchParams.get('placa') || ''
   const tipoRaw = searchParams.get('tipo') || 'smart'
   const tipo = tipoRaw === 'premium' ? 'premium' : tipoRaw === 'completo' ? 'completo' : 'smart'
-  const credits_needed = tipo === 'completo' || tipo === 'premium' ? 48 : 16
+  const credits_needed = tipo === 'completo' || tipo === 'premium' ? 49 : 26
 
   const [step, setStep] = useState<'loading' | 'confirm' | 'processing' | 'report' | 'error'>('loading')
   const [credits, setCredits] = useState(0)
@@ -329,7 +329,7 @@ function ConsultaContent() {
                 <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 14 }}>O plano COMPLETO inclui histórico de leilão, classificação, débitos e recall.</p>
                 <Link href={`/consulta?placa=${plate}&tipo=completo`}>
                   <button style={{ background: 'linear-gradient(135deg,#d97706,#b45309)', border: 'none', borderRadius: 10, padding: '10px 20px', color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
-                    Consultar Completo + Leilão — 48 créditos
+                    Consultar Completo + Leilão — 49 créditos
                   </button>
                 </Link>
               </div>

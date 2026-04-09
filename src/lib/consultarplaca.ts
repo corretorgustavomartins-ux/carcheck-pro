@@ -65,14 +65,15 @@ export type TipoConsulta = 'smart' | 'completo' | 'premium'
 /**
  * Mapeamento dos nossos planos internos para os planos da API ConsultarPlaca:
  *
- *  smart    → prata   (dados completos + sinistro/gravame/restrições — SEM leilão)
- *             Custo API: ~R$12,90 | Preço carcheck: R$15,90 (16 créditos)
+ *  smart    → bronze  (dados básicos + sinistro + roubo/furto + gravame + FIPE + débitos)
+ *             SEM Renavam | SEM Leilão
+ *             Custo API estimado: ~R$21,80 | Preço carcheck: R$25,99 (26 créditos)
  *
- *  completo → ouro    (dados completos + sinistro/gravame + HISTÓRICO DE LEILÃO)
- *             Custo API: ~R$19,90 | Preço carcheck: R$35,90 (48 créditos)
+ *  completo → prata   (tudo do smart + LEILÃO PRIME com classificação)
+ *             SEM Renavam | COM Leilão
+ *             Custo API estimado: ~R$38,70 | Preço carcheck: R$48,90 (49 créditos)
  *
- *  premium  → diamante (tudo + fotos + ficha técnica — plano legado/upsell)
- *             Custo API: ~R$29,90
+ *  premium  → ouro/diamante (legado/upsell — com fotos e ficha técnica)
  */
 function mapTipo(tipo: TipoConsulta): string {
   if (tipo === 'premium') return 'diamante'
