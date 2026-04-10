@@ -382,25 +382,25 @@ export default function HomePage() {
           <div ref={pricRef} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,260px),1fr))', gap: 18, marginBottom: 40 }}>
             {[
               {
-                id: 'starter', name: 'Inicial', credits: 16, queries: 1,
-                price: 'R$ 15,99', priceNum: 15.99, icon: '🟢', popular: false, badge: null,
+                id: 'starter', name: 'Consulta SMART', credits: 26, queries: 1, queriesCompleto: 0,
+                price: 'R$ 25,99', priceNum: 25.99, icon: '🔍', popular: false, badge: null,
                 color: '#10b981', bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.2)',
                 btn: 'linear-gradient(135deg,#059669,#10b981)', btnS: 'rgba(16,185,129,0.3)',
-                features: ['1 consulta SMART','Score Anti-Bomba 0-100','Preço Justo IA','PDF incluído','Validade 30 dias'],
+                features: ['1 consulta SMART completa','Score Anti-Bomba 0–100','Sinistro + Gravame + Restrições','Histórico roubo e furto','Preço Justo IA','PDF incluído'],
               },
               {
-                id: 'recommended', name: 'Recomendado', credits: 48, queries: 3,
-                price: 'R$ 39,90', priceNum: 39.90, icon: '🔥', popular: true, badge: '⭐ Mais vendido',
-                color: '#3b82f6', bg: 'rgba(59,130,246,0.07)', border: 'rgba(59,130,246,0.35)',
-                btn: 'linear-gradient(135deg,#2563eb,#3b82f6)', btnS: 'rgba(59,130,246,0.35)',
-                features: ['3 consultas SMART','Score Anti-Bomba 0-100','Preço Justo IA','PDF incluído','Validade 60 dias'],
+                id: 'recommended', name: 'Completo + Leilão', credits: 49, queries: 0, queriesCompleto: 1,
+                price: 'R$ 48,90', priceNum: 48.90, icon: '🏆', popular: true, badge: '⭐ Mais recomendado',
+                color: '#f59e0b', bg: 'rgba(245,158,11,0.07)', border: 'rgba(245,158,11,0.35)',
+                btn: 'linear-gradient(135deg,#d97706,#f59e0b)', btnS: 'rgba(245,158,11,0.35)',
+                features: ['1 consulta COMPLETA com leilão','Histórico completo de leilão','Classificação (A, B, C, D)','Score Anti-Bomba 0–100','Débitos IPVA e multas','Recall do fabricante','Preço Justo IA','PDF incluído'],
               },
               {
-                id: 'smart', name: 'Inteligente', credits: 100, queries: 6,
-                price: 'R$ 69,90', priceNum: 69.90, icon: '🟣', popular: false, badge: null,
+                id: 'pro', name: 'Profissional', credits: 98, queries: 0, queriesCompleto: 2,
+                price: 'R$ 89,90', priceNum: 89.90, icon: '💼', popular: false, badge: null,
                 color: '#8b5cf6', bg: 'rgba(139,92,246,0.06)', border: 'rgba(139,92,246,0.2)',
                 btn: 'linear-gradient(135deg,#7c3aed,#8b5cf6)', btnS: 'rgba(139,92,246,0.3)',
-                features: ['6 consultas SMART','Score Anti-Bomba 0-100','Preço Justo IA','PDF incluído','Suporte prioritário','Validade 90 dias'],
+                features: ['2 consultas COMPLETAS com leilão','Tudo do plano Completo','Score Anti-Bomba 0–100','PDF incluído','Histórico salvo no painel'],
               },
             ].map((pkg, i) => (
               <div key={pkg.id} style={{
@@ -433,8 +433,16 @@ export default function HomePage() {
                 </div>
 
                 <div style={{ padding: '9px 12px', borderRadius: 9, marginBottom: 18, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#cbd5e1', fontSize: 12, fontWeight: 600 }}>{pkg.queries} consulta{pkg.queries > 1 ? 's' : ''} SMART</span>
-                  <span style={{ color: pkg.color, fontSize: 11, fontWeight: 700 }}>R$ {(pkg.priceNum / pkg.queries).toFixed(2)}/cada</span>
+                  <span style={{ color: '#cbd5e1', fontSize: 12, fontWeight: 600 }}>
+                    {pkg.queriesCompleto > 0
+                      ? `${pkg.queriesCompleto} consulta${pkg.queriesCompleto > 1 ? 's' : ''} Completa${pkg.queriesCompleto > 1 ? 's' : ''} + Leilão`
+                      : `${pkg.queries} consulta SMART`}
+                  </span>
+                  <span style={{ color: pkg.color, fontSize: 11, fontWeight: 700 }}>
+                    {pkg.queriesCompleto > 0
+                      ? `R$ ${(pkg.priceNum / pkg.queriesCompleto).toFixed(2)}/cada`
+                      : `R$ ${pkg.priceNum.toFixed(2)}`}
+                  </span>
                 </div>
 
                 <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -447,7 +455,7 @@ export default function HomePage() {
 
                 <Link href={`/comprar?pacote=${pkg.id}`}>
                   <button style={{ width: '100%', padding: '12px 18px', borderRadius: 11, background: pkg.btn, boxShadow: `0 4px 20px ${pkg.btnS}`, color: '#fff', fontWeight: 700, fontSize: 13, border: 'none', cursor: 'pointer' }}>
-                    Comprar {pkg.name}
+                    Adquirir — {pkg.price}
                   </button>
                 </Link>
               </div>
@@ -464,29 +472,32 @@ export default function HomePage() {
           <div style={{ maxWidth: 700, margin: '0 auto', background: '#0a1628', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: 'clamp(20px,4vw,40px) clamp(16px,3vw,32px)' }}>
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <h3 style={{ color: '#fff', fontSize: 'clamp(18px,3vw,22px)', fontWeight: 900, marginBottom: 6 }}>Qual relatório escolher?</h3>
-              <p style={{ color: '#64748b', fontSize: 13 }}>Compare SMART vs PREMIUM</p>
+              <p style={{ color: '#64748b', fontSize: 13 }}>Compare SMART vs COMPLETO + LEILÃO</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.08)' }}>
               <Th style={{ borderRight: '1px solid rgba(255,255,255,0.08)' }}><span style={{ color: '#64748b', fontSize: 11, fontWeight: 700, textTransform: 'uppercase' as const }}>Recurso</span></Th>
               <Th style={{ background: 'rgba(59,130,246,0.08)', borderRight: '1px solid rgba(255,255,255,0.08)', textAlign: 'center' as const }}>
                 <div style={{ color: '#60a5fa', fontSize: 10, fontWeight: 900, textTransform: 'uppercase' as const }}>🔍 SMART</div>
-                <div style={{ color: '#fff', fontSize: 'clamp(14px,2.5vw,18px)', fontWeight: 900 }}>16 cr.</div>
+                <div style={{ color: '#fff', fontSize: 'clamp(14px,2.5vw,18px)', fontWeight: 900 }}>26 cr.</div>
+                <div style={{ color: '#475569', fontSize: 10 }}>R$ 25,99</div>
               </Th>
-              <Th style={{ background: 'rgba(139,92,246,0.1)', textAlign: 'center' as const }}>
-                <div style={{ color: '#a78bfa', fontSize: 10, fontWeight: 900, textTransform: 'uppercase' as const }}>💎 PREMIUM</div>
-                <div style={{ color: '#fff', fontSize: 'clamp(14px,2.5vw,18px)', fontWeight: 900 }}>35 cr.</div>
+              <Th style={{ background: 'rgba(245,158,11,0.1)', textAlign: 'center' as const }}>
+                <div style={{ color: '#fbbf24', fontSize: 10, fontWeight: 900, textTransform: 'uppercase' as const }}>🏆 COMPLETO</div>
+                <div style={{ color: '#fff', fontSize: 'clamp(14px,2.5vw,18px)', fontWeight: 900 }}>49 cr.</div>
+                <div style={{ color: '#475569', fontSize: 10 }}>R$ 48,90</div>
               </Th>
               {[
-                ['Score Anti-Bomba','✅','✅'],['Sinistro + Gravame','✅','✅'],
-                ['Preço Justo IA','✅','✅'],['Restrições DETRAN','✅','✅'],
+                ['Score Anti-Bomba','✅','✅'],['Sinistro + Perda Total','✅','✅'],
+                ['Gravame (alienação)','✅','✅'],['Restrições federais','✅','✅'],
+                ['Roubo / Furto','✅','✅'],['Preço Justo IA','✅','✅'],
                 ['PDF do relatório','✅','✅'],['Histórico de leilão','—','✅'],
-                ['Recall fabricante','—','✅'],['Fotos oficiais','—','✅'],
-                ['Ficha técnica','—','✅'],['Débitos IPVA/multas','—','✅'],
-              ].map(([label, smart, premium], i) => (
+                ['Classificação leilão (A-D)','—','✅'],['Débitos IPVA/multas','—','✅'],
+                ['Recall fabricante','—','✅'],['Renavam','—','—'],
+              ].map(([label, smart, completo], i) => (
                 <div key={i} style={{ display: 'contents' }}>
                   <Td alt={i%2===1} border><span style={{ color: '#94a3b8', fontSize: 'clamp(11px,2vw,13px)' }}>{label}</span></Td>
                   <Td alt={i%2===1} border smartCol><span style={{ color: smart==='✅'?'#4ade80':'#334155', fontSize: 15 }}>{smart}</span></Td>
-                  <Td alt={i%2===1} premiumCol><span style={{ color: premium==='✅'?'#a78bfa':'#334155', fontSize: 15 }}>{premium}</span></Td>
+                  <Td alt={i%2===1} premiumCol><span style={{ color: completo==='✅'?'#fbbf24':'#334155', fontSize: 15 }}>{completo}</span></Td>
                 </div>
               ))}
             </div>
@@ -545,7 +556,7 @@ export default function HomePage() {
           <div ref={faqRef} style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {[
               { icon:'🛡️', q:'Os dados são oficiais?',              a:'Sim. Consultamos DETRAN, DENATRAN e SERASA em tempo real para garantir precisão.' },
-              { icon:'⏱️', q:'Os créditos têm validade?',            a:'Inicial: 30 dias. Recomendado: 60 dias. Inteligente: 90 dias.' },
+              { icon:'⏱️', q:'Os créditos têm validade?',            a:'Sim, os créditos têm validade conforme o pacote adquirido. Consulte os detalhes de cada plano.' },
               { icon:'📍', q:'Funciona com qualquer placa?',         a:'Sim, Mercosul (ABC1D23) e antigo (ABC1234), de qualquer estado do Brasil.' },
               { icon:'🔍', q:'Substitui vistoria cautelar?',         a:'Não. É análise eletrônica. Para compra segura, recomendamos também vistoria presencial.' },
               { icon:'💳', q:'Quais formas de pagamento?',           a:'PIX via Mercado Pago. Pagamento instantâneo e créditos liberados automaticamente.' },
@@ -580,7 +591,7 @@ export default function HomePage() {
             <GradText>economizar milhares</GradText>
           </h2>
           <p style={{ color: '#64748b', fontSize: 'clamp(14px,2vw,17px)', lineHeight: 1.7, marginBottom: 36 }}>
-            Por <strong style={{ color: '#fff' }}>R$ 15,99</strong> você descobre tudo antes de comprar.
+            Por <strong style={{ color: '#fff' }}>R$ 25,99</strong> você descobre tudo antes de comprar.
             Evite prejuízos de <strong style={{ color: '#fff' }}>R$ 20.000 ou mais</strong>.
           </p>
           <div style={{ maxWidth: 420, margin: '0 auto 24px' }}>
