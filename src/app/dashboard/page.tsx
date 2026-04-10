@@ -11,6 +11,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [plate, setPlate] = useState('')
   const [plateError, setPlateError] = useState('')
+  const [voucherCode, setVoucherCode] = useState('')
+  const [voucherMsg, setVoucherMsg] = useState('')
+  const [voucherLoading, setVoucherLoading] = useState(false)
+  const [voucherSuccess, setVoucherSuccess] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -54,6 +58,32 @@ export default function DashboardPage() {
     // Vai direto para tela de seleção de consulta
     // (verificação de créditos é feita na própria tela de seleção)
     window.location.href = `/selecionar-consulta?placa=${clean}`
+  }
+
+  const handleVoucher = async () => {
+    const code = voucherCode.trim().toUpperCase()
+    if (code.length < 3) { setVoucherMsg('❌ Digite o código do voucher'); return }
+    setVoucherLoading(true); setVoucherMsg(''); setVoucherSuccess(false)
+    try {
+      const res = await fetch('/api/voucher/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      const d = await res.json()
+      if (!res.ok) {
+        setVoucherMsg('❌ ' + (d.error || 'Código inválido'))
+      } else {
+        setVoucherSuccess(true)
+        setVoucherMsg(`✅ ${d.credits} créditos adicionados!`)
+        setCredits(prev => prev + d.credits)
+        setVoucherCode('')
+      }
+    } catch {
+      setVoucherMsg('❌ Erro ao processar voucher')
+    } finally {
+      setVoucherLoading(false)
+    }
   }
 
   if (loading) {
@@ -321,6 +351,58 @@ export default function DashboardPage() {
                   </Link>
                 ))}
               </div>
+            </div>
+
+            {/* Card Voucher */}
+            <div style={{
+              background: 'rgba(255,255,255,0.03)',
+              border: voucherSuccess ? '1px solid rgba(52,211,153,0.3)' : '1px solid rgba(245,158,11,0.2)',
+              borderRadius: 20,
+              padding: 20,
+              background: voucherSuccess ? 'rgba(16,185,129,0.05)' : 'rgba(245,158,11,0.04)',
+            } as React.CSSProperties}>
+              <h3 style={{ color: voucherSuccess ? '#34d399' : '#fbbf24', fontSize: 13, fontWeight: 700, marginBottom: 4 }}>
+                🎟️ Voucher de créditos
+              </h3>
+              <p style={{ color: '#475569', fontSize: 12, marginBottom: 14 }}>
+                Tem um código? Resgate seus créditos aqui.
+              </p>
+              <input
+                type="text"
+                value={voucherCode}
+                onChange={e => { setVoucherCode(e.target.value.toUpperCase()); setVoucherMsg('') }}
+                onKeyDown={e => e.key === 'Enter' && handleVoucher()}
+                placeholder="Ex: CARCHECK-X7K2P"
+                maxLength={20}
+                style={{
+                  width: '100%', boxSizing: 'border-box',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 10, padding: '10px 12px',
+                  color: '#fff', fontSize: 13, fontWeight: 700,
+                  letterSpacing: 1, outline: 'none',
+                  fontFamily: 'monospace',
+                  marginBottom: 10,
+                }}
+              />
+              {voucherMsg && (
+                <p style={{ color: voucherSuccess ? '#34d399' : '#f87171', fontSize: 13, fontWeight: 600, marginBottom: 10 }}>
+                  {voucherMsg}
+                </p>
+              )}
+              <button
+                onClick={handleVoucher}
+                disabled={voucherLoading}
+                style={{
+                  width: '100%',
+                  background: voucherLoading ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg,#d97706,#f59e0b)',
+                  border: 'none', borderRadius: 10, padding: '10px 0',
+                  color: voucherLoading ? '#475569' : '#fff',
+                  fontWeight: 700, fontSize: 13, cursor: voucherLoading ? 'default' : 'pointer',
+                }}
+              >
+                {voucherLoading ? 'Verificando...' : '✨ Resgatar voucher'}
+              </button>
             </div>
           </div>
 
