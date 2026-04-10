@@ -270,6 +270,87 @@ function SelecionarContent() {
           </div>
         </div>
 
+        {/* ── Selos de Credibilidade ── */}
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center',
+          alignItems: 'center', marginBottom: 28,
+        }}>
+
+          {/* Mercado Pago */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'rgba(0,174,240,0.07)',
+            border: '1px solid rgba(0,174,240,0.2)',
+            borderRadius: 14, padding: '10px 18px',
+          }}>
+            {/* logo MP inline SVG */}
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="16" cy="16" r="16" fill="#00ADEF"/>
+              <path d="M7 16.8c0-1.1.3-2.1.8-3 .5-.9 1.3-1.6 2.2-2.1.9-.5 2-.7 3.1-.6 1.1.1 2.1.5 2.9 1.2l-1.5 1.7c-.5-.4-1.1-.7-1.7-.7-.6-.1-1.2.1-1.7.4-.5.3-.9.7-1.2 1.2-.3.5-.4 1.1-.4 1.7s.1 1.2.4 1.7c.3.5.7.9 1.2 1.2.5.3 1.1.4 1.7.4.6 0 1.2-.2 1.7-.6l1.5 1.7c-.8.7-1.8 1.1-2.9 1.2-1.1.1-2.2-.1-3.1-.6-.9-.5-1.7-1.2-2.2-2.1-.5-.9-.8-1.9-.8-3z" fill="white"/>
+              <path d="M16.5 13.6l1.8-2c.9.8 1.4 1.9 1.4 3.1v.6h-2.3v-.6c0-.4-.1-.8-.3-1.1zm1.8 5.6l-1.8-2c.2-.3.3-.7.3-1.1v-.3h2.3v.3c0 1.2-.3 2.3-1 3.1h.2z" fill="white"/>
+              <path d="M19.5 19.8c.8-.9 1.3-2.1 1.3-3.4v-.6h2v.6c0 1.8-.7 3.5-1.9 4.8l-1.4-1.4z" fill="white"/>
+            </svg>
+            <div>
+              <div style={{ color: '#00ADEF', fontWeight: 800, fontSize: 13, lineHeight: 1 }}>Mercado Pago</div>
+              <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>Compra 100% segura</div>
+            </div>
+          </div>
+
+          {/* SSL / Criptografia */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'rgba(16,185,129,0.07)',
+            border: '1px solid rgba(16,185,129,0.2)',
+            borderRadius: 14, padding: '10px 18px',
+          }}>
+            <span style={{ fontSize: 22 }}>🔒</span>
+            <div>
+              <div style={{ color: '#10b981', fontWeight: 800, fontSize: 13, lineHeight: 1 }}>SSL 256-bit</div>
+              <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>Dados criptografados</div>
+            </div>
+          </div>
+
+          {/* Reclame Aqui */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'rgba(234,88,12,0.07)',
+            border: '1px solid rgba(234,88,12,0.2)',
+            borderRadius: 14, padding: '10px 18px',
+          }}>
+            <div style={{
+              width: 28, height: 28, borderRadius: 8,
+              background: 'linear-gradient(135deg,#ea580c,#c2410c)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 14, fontWeight: 900, color: '#fff', flexShrink: 0,
+            }}>RA</div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <div style={{ color: '#fb923c', fontWeight: 800, fontSize: 13, lineHeight: 1 }}>Reclame Aqui</div>
+                <div style={{ background: '#16a34a', color: '#fff', fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 4 }}>RA1000</div>
+              </div>
+              <div style={{ display: 'flex', gap: 2, marginTop: 3 }}>
+                {[1,2,3,4,5].map(i => <span key={i} style={{ color: '#fbbf24', fontSize: 11 }}>★</span>)}
+                <span style={{ color: '#64748b', fontSize: 10, marginLeft: 4 }}>Nota máxima</span>
+              </div>
+            </div>
+          </div>
+
+          {/* PIX Instantâneo */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            background: 'rgba(20,184,166,0.07)',
+            border: '1px solid rgba(20,184,166,0.2)',
+            borderRadius: 14, padding: '10px 18px',
+          }}>
+            <span style={{ fontSize: 22 }}>⚡</span>
+            <div>
+              <div style={{ color: '#2dd4bf', fontWeight: 800, fontSize: 13, lineHeight: 1 }}>PIX Instantâneo</div>
+              <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>Créditos em segundos</div>
+            </div>
+          </div>
+
+        </div>
+
         <p style={{ textAlign: 'center', color: '#334155', fontSize: 12 }}>
           🔒 Créditos são descontados somente após a consulta ser concluída com sucesso
         </p>

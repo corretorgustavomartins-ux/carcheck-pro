@@ -232,7 +232,25 @@ function ComprarContent() {
             <button onClick={copyPix} style={{ width: '100%', background: '#2563eb', color: '#fff', border: 'none', borderRadius: 12, padding: '14px 0', fontWeight: 700, fontSize: 15, cursor: 'pointer', marginBottom: 12 }}>
               📋 Copiar código PIX
             </button>
-            <p style={{ color: '#475569', fontSize: 12, textAlign: 'center', marginBottom: 12 }}>⏱ Expira em 30 minutos • 🔄 Créditos liberados automaticamente</p>
+            <p style={{ color: '#475569', fontSize: 12, textAlign: 'center', marginBottom: 16 }}>⏱ Expira em 30 minutos • 🔄 Créditos liberados automaticamente</p>
+
+            {/* Selos — tela PIX */}
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'rgba(0,174,240,0.07)', border: '1px solid rgba(0,174,240,0.2)', borderRadius: 10, padding: '7px 12px' }}>
+                <svg width="18" height="18" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#00ADEF"/><path d="M7 16.8c0-1.1.3-2.1.8-3 .5-.9 1.3-1.6 2.2-2.1.9-.5 2-.7 3.1-.6 1.1.1 2.1.5 2.9 1.2l-1.5 1.7c-.5-.4-1.1-.7-1.7-.7-.6-.1-1.2.1-1.7.4-.5.3-.9.7-1.2 1.2-.3.5-.4 1.1-.4 1.7s.1 1.2.4 1.7c.3.5.7.9 1.2 1.2.5.3 1.1.4 1.7.4.6 0 1.2-.2 1.7-.6l1.5 1.7c-.8.7-1.8 1.1-2.9 1.2-1.1.1-2.2-.1-3.1-.6-.9-.5-1.7-1.2-2.2-2.1-.5-.9-.8-1.9-.8-3z" fill="white"/><path d="M16.5 13.6l1.8-2c.9.8 1.4 1.9 1.4 3.1v.6h-2.3v-.6c0-.4-.1-.8-.3-1.1zm1.8 5.6l-1.8-2c.2-.3.3-.7.3-1.1v-.3h2.3v.3c0 1.2-.3 2.3-1 3.1h.2z" fill="white"/><path d="M19.5 19.8c.8-.9 1.3-2.1 1.3-3.4v-.6h2v.6c0 1.8-.7 3.5-1.9 4.8l-1.4-1.4z" fill="white"/></svg>
+                <span style={{ color: '#00ADEF', fontWeight: 700, fontSize: 11 }}>Mercado Pago</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, padding: '7px 12px' }}>
+                <span style={{ fontSize: 14 }}>🔒</span>
+                <span style={{ color: '#10b981', fontWeight: 700, fontSize: 11 }}>SSL 256-bit</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'rgba(234,88,12,0.07)', border: '1px solid rgba(234,88,12,0.2)', borderRadius: 10, padding: '7px 12px' }}>
+                <div style={{ width: 18, height: 18, borderRadius: 4, background: 'linear-gradient(135deg,#ea580c,#c2410c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 900, color: '#fff' }}>RA</div>
+                <span style={{ color: '#fb923c', fontWeight: 700, fontSize: 11 }}>RA1000</span>
+                <div style={{ display: 'flex', gap: 1 }}>{[1,2,3,4,5].map(i => <span key={i} style={{ color: '#fbbf24', fontSize: 10 }}>★</span>)}</div>
+              </div>
+            </div>
+
             <button onClick={() => setPaymentStep('select')} style={{ width: '100%', background: 'none', border: 'none', color: '#64748b', fontSize: 14, cursor: 'pointer' }}>← Voltar e escolher outro pacote</button>
           </div>
         </div>
@@ -346,9 +364,47 @@ function ComprarContent() {
             >
               {loading ? 'Processando...' : '💚 Pagar via PIX'}
             </button>
-            <p style={{ color: '#475569', fontSize: 12, textAlign: 'center', marginTop: 10 }}>
-              🔒 Pagamento seguro • ⚡ Créditos em segundos
-            </p>
+            {/* Selos — tela seleção pacotes */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,174,240,0.07)', border: '1px solid rgba(0,174,240,0.18)', borderRadius: 12, padding: '8px 12px' }}>
+                  <svg width="20" height="20" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#00ADEF"/><path d="M7 16.8c0-1.1.3-2.1.8-3 .5-.9 1.3-1.6 2.2-2.1.9-.5 2-.7 3.1-.6 1.1.1 2.1.5 2.9 1.2l-1.5 1.7c-.5-.4-1.1-.7-1.7-.7-.6-.1-1.2.1-1.7.4-.5.3-.9.7-1.2 1.2-.3.5-.4 1.1-.4 1.7s.1 1.2.4 1.7c.3.5.7.9 1.2 1.2.5.3 1.1.4 1.7.4.6 0 1.2-.2 1.7-.6l1.5 1.7c-.8.7-1.8 1.1-2.9 1.2-1.1.1-2.2-.1-3.1-.6-.9-.5-1.7-1.2-2.2-2.1-.5-.9-.8-1.9-.8-3z" fill="white"/><path d="M16.5 13.6l1.8-2c.9.8 1.4 1.9 1.4 3.1v.6h-2.3v-.6c0-.4-.1-.8-.3-1.1zm1.8 5.6l-1.8-2c.2-.3.3-.7.3-1.1v-.3h2.3v.3c0 1.2-.3 2.3-1 3.1h.2z" fill="white"/><path d="M19.5 19.8c.8-.9 1.3-2.1 1.3-3.4v-.6h2v.6c0 1.8-.7 3.5-1.9 4.8l-1.4-1.4z" fill="white"/></svg>
+                  <div>
+                    <div style={{ color: '#00ADEF', fontWeight: 700, fontSize: 11, lineHeight: 1 }}>Mercado Pago</div>
+                    <div style={{ color: '#475569', fontSize: 10 }}>Compra 100% segura</div>
+                  </div>
+                </div>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.18)', borderRadius: 12, padding: '8px 12px' }}>
+                  <span style={{ fontSize: 18 }}>🔒</span>
+                  <div>
+                    <div style={{ color: '#10b981', fontWeight: 700, fontSize: 11, lineHeight: 1 }}>SSL 256-bit</div>
+                    <div style={{ color: '#475569', fontSize: 10 }}>Dados criptografados</div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(234,88,12,0.07)', border: '1px solid rgba(234,88,12,0.18)', borderRadius: 12, padding: '8px 12px' }}>
+                  <div style={{ width: 22, height: 22, borderRadius: 6, background: 'linear-gradient(135deg,#ea580c,#c2410c)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 900, color: '#fff', flexShrink: 0 }}>RA</div>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ color: '#fb923c', fontWeight: 700, fontSize: 11 }}>Reclame Aqui</span>
+                      <span style={{ background: '#16a34a', color: '#fff', fontSize: 8, fontWeight: 800, padding: '1px 5px', borderRadius: 3 }}>RA1000</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 1, marginTop: 2 }}>
+                      {[1,2,3,4,5].map(i => <span key={i} style={{ color: '#fbbf24', fontSize: 9 }}>★</span>)}
+                      <span style={{ color: '#64748b', fontSize: 9, marginLeft: 4 }}>Nota máxima</span>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(20,184,166,0.07)', border: '1px solid rgba(20,184,166,0.18)', borderRadius: 12, padding: '8px 12px' }}>
+                  <span style={{ fontSize: 18 }}>⚡</span>
+                  <div>
+                    <div style={{ color: '#2dd4bf', fontWeight: 700, fontSize: 11, lineHeight: 1 }}>PIX Instantâneo</div>
+                    <div style={{ color: '#475569', fontSize: 10 }}>Créditos em segundos</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
