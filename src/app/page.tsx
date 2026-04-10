@@ -130,7 +130,7 @@ export default function HomePage() {
     const clean = plate.replace(/-/g, '')
     if (!validate(clean)) { setError('Placa inválida. Ex: ABC-1D23 ou ABC-1234'); return }
     setLoading(true)
-    router.push(`/resultado?placa=${clean}`)
+    router.push(`/selecionar-consulta?placa=${clean}`)
   }
 
   const fade = (key: string, delay = 0): React.CSSProperties => ({

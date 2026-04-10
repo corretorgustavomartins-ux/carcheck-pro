@@ -50,12 +50,9 @@ export default function DashboardPage() {
       setPlateError('Digite uma placa válida. Ex: ABC1D23')
       return
     }
-    if (credits < 26) {
-      window.location.href = '/comprar'
-      return
-    }
     setPlateError('')
     // Vai direto para tela de seleção de consulta
+    // (verificação de créditos é feita na própria tela de seleção)
     window.location.href = `/selecionar-consulta?placa=${clean}`
   }
 
